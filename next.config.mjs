@@ -1,8 +1,7 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-    experimental: {
-      appDir: true,
-    },
+// next.config.mjs
+export default {
+    reactStrictMode: true,
+    swcMinify: true,
     images: {
       remotePatterns: [
         {
@@ -15,7 +14,8 @@ const nextConfig = {
         },
       ],
     },
+    experimental: {
+      // No 'appDir' key here
+    },
   };
-  
-  export default nextConfig;
   
