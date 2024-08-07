@@ -1,14 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
-import { FaSearch } from "react-icons/fa";
-import { IoIosArrowBack, IoIosMenu } from "react-icons/io";
+import React, { useState, useEffect } from 'react';
+import { FaSearch } from 'react-icons/fa';
+import { IoIosArrowBack, IoIosMenu } from 'react-icons/io';
 import { useSession } from 'next-auth/react';
 import Sidebar from './smSidebar';
+
+interface Repository {
+  id: number;
+  name: string;
+  html_url: string;
+}
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('repos');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [repositories, setRepositories] = useState<Repository[]>([]);
+  const [contributedRepositories, setContributedRepositories] = useState<Repository[]>([]);
   const { data: session } = useSession();
 
   const tabClasses = (tabName: string) =>
@@ -19,6 +27,26 @@ export default function ProfilePage() {
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
+
+  useEffect(() => {
+    const fetchRepositories = async () => {
+      if (session?.accessToken && activeTab === 'repos') {
+        try {
+          const response = await fetch('/api/github-repos');
+          if (!response.ok) {
+            throw new Error('Failed to fetch repositories');
+          }
+          const { userRepos, contributedRepos } = await response.json();
+          setRepositories(userRepos);
+          setContributedRepositories(contributedRepos);
+        } catch (error) {
+          console.error('Error fetching repositories:', error);
+        }
+      }
+    };
+
+    fetchRepositories();
+  }, [activeTab, session]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -42,7 +70,32 @@ export default function ProfilePage() {
             </div>
             <div className="mb-4"></div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 mx-3 lg:gap-8 max-w-6xl overflow-y-auto">
-              {/* Repository cards go here */}
+              {repositories.map((repo) => (
+                <div key={repo.id} className="p-4 border rounded-md shadow-sm bg-white">
+                  <h3 className="text-lg font-semibold">{repo.name}</h3>
+                  <a
+                    href={repo.html_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    View Repository
+                  </a>
+                </div>
+              ))}
+              {contributedRepositories.map((repo) => (
+                <div key={repo.id} className="p-4 border rounded-md shadow-sm bg-white">
+                  <h3 className="text-lg font-semibold">{repo.name}</h3>
+                  <a
+                    href={repo.html_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    View Contributed Repository
+                  </a>
+                </div>
+              ))}
             </div>
           </div>
         );
