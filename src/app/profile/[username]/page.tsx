@@ -10,6 +10,10 @@ import Navbar from '../../components/Navbar';
 import Sidebar from '../sidebar';
 import React from 'react';
 import { Metadata } from 'next';
+import dynamic from 'next/dynamic'
+import { ZkRegexProvider } from '@zk-email/zk-regex-sdk';
+import { config } from '@/lib/contract';
+
 
 interface Props {
   params?: {
@@ -20,6 +24,9 @@ interface Props {
 export const metadata: Metadata = {
   title: "Metrics Garden Labs - Project",
 };
+
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+
 
 const ProjectPage = async ({ params }: Props) => {
   const encodedProjectName = params?.username || '';
@@ -33,8 +40,10 @@ const ProjectPage = async ({ params }: Props) => {
         <div className="flex flex-1 overflow-hidden">
           <Sidebar />
           <main className="flex-1 overflow-auto">
-            <ProfilePage 
-              />
+            <ZkRegexProvider clientId={GOOGLE_CLIENT_ID} zkRegexRegistryUrl=''>
+                <ProfilePage 
+                />
+            </ZkRegexProvider>
           </main>
         </div>
         {/* <Footer /> */}
@@ -44,5 +53,4 @@ const ProjectPage = async ({ params }: Props) => {
     }
 
 export default ProjectPage;
-
 

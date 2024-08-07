@@ -5,6 +5,8 @@ import { FaSearch } from 'react-icons/fa';
 import { IoIosArrowBack, IoIosMenu } from 'react-icons/io';
 import { useSession } from 'next-auth/react';
 import Sidebar from './smSidebar';
+import { VerifyContent } from './verifyContent';
+import { Entry } from '../../lib/utils/types';
 
 interface Repository {
   id: number;
@@ -18,6 +20,17 @@ export default function ProfilePage() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [contributedRepositories, setContributedRepositories] = useState<Repository[]>([]);
   const { data: session } = useSession();
+
+  const entry: Entry = {
+    id: 1,
+    slug: 'example-entry',
+    parameters: {},
+    emailQuery: '',
+    contractAddress: '0xYourContractAddress',
+    verifierContractAddress: '0xYourVerifierContractAddress',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
 
   const tabClasses = (tabName: string) =>
     `cursor-pointer px-4 py-2 text-sm font-semibold mr-2 ${
@@ -130,6 +143,16 @@ export default function ProfilePage() {
             </div>
           </div>
         );
+      case 'verify':
+        return (
+        <div className="text-black text-left">
+            <h3 className="font-semibold mb-4">Verify your Github</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 mx-3 lg:gap-8 max-w-6xl overflow-y-auto">
+              <VerifyContent entry={entry} />
+
+            </div>
+          </div>
+      );
       default:
         return <div className="text-black">Select a tab</div>;
     }
@@ -155,6 +178,9 @@ export default function ProfilePage() {
           </button>
           <button onClick={() => setActiveTab('insights')} className={tabClasses('insights')}>
             Insights
+          </button>
+          <button onClick={() => setActiveTab('verify')} className={tabClasses('verify')}>
+            Verify
           </button>
         </nav>
       </div>
