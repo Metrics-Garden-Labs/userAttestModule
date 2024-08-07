@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { FaBars, FaTimes } from 'react-icons/fa';
 import { isMobile } from 'react-device-detect';
 import { signIn, signOut, useSession } from 'next-auth/react';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 export default function Navbar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -45,19 +46,23 @@ export default function Navbar() {
           </p>
         </Link>
         <div className="hidden md:flex justify-end items-center lg:gap-x-8 md:gap-x-2">
-          <Link href="/projectSignUp">
-            <p className="text-white lg:text-md md:text-sm hover:text-opacity-75">REGISTER PROJECT</p>
-          </Link>
-          <Link href="/searchProject">
-            <p className="text-white lg:text-md md:text-sm hover:text-opacity-75">SEARCH PROJECTS</p>
-          </Link>
           <Link href="/searchUsers">
-            <p className="text-white text-md md:text-sm hover:text-opacity-75">USERS</p>
+            <p className="text-white text-md md:text-sm hover:text-opacity-75">SEARCH USERS</p>
           </Link>
+          {status === 'authenticated' && (
+            <Link href={`/profile/${session?.user?.name}`}>
+              <p className="text-white lg:text-md md:text-sm hover:text-opacity-75">PROFILE</p>
+            </Link>
+          )}
         </div>
         <div className="flex items-center relative">
           {status === 'authenticated' ? (
             <div className="flex items-center space-x-2">
+              <ConnectButton 
+                accountStatus="address"
+                chainStatus="icon"
+                showBalance={false}
+              />
               <Image
                 src={session?.user?.image || ""}
                 alt={session?.user?.name || ""}
@@ -118,18 +123,13 @@ export default function Navbar() {
         </div>
         <ul className="space-y-4 mt-8">
           <li>
-            <Link href="/projectSignUp">
-              <p className="block py-2" onClick={closeSidebar}>REGISTER PROJECT</p>
-            </Link>
-          </li>
-          <li>
-            <Link href="/searchProject">
-              <p className="block py-2" onClick={closeSidebar}>SEARCH PROJECTS</p>
-            </Link>
-          </li>
-          <li>
             <Link href="/searchUsers">
               <p className="block py-2" onClick={closeSidebar}>SEARCH USERS</p>
+            </Link>
+          </li>
+          <li>
+            <Link href="/profile">
+              <p className="block py-2" onClick={closeSidebar}>PROFILE</p>
             </Link>
           </li>
         </ul>
