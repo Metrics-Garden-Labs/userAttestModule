@@ -40,7 +40,7 @@ const ProjectPage = async ({ params }: Props) => {
         <div className="flex flex-1 overflow-hidden">
           <Sidebar />
           <main className="flex-1 overflow-auto">
-            <ZkRegexProvider clientId={GOOGLE_CLIENT_ID} zkRegexRegistryUrl=''>
+            <ZkRegexProvider clientId={GOOGLE_CLIENT_ID} zkRegexRegistryUrl='https://registry-dev.zkregex.com'>
                 <ProfilePage 
                 />
             </ZkRegexProvider>

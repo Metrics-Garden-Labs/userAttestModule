@@ -1,5 +1,5 @@
+import React, { useState, useEffect, FormEvent, useRef, use } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { useState, useEffect, FormEvent } from 'react';
 import { fetchEmailList, fetchEmailsRaw, useZkRegex } from '@zk-email/zk-regex-sdk';
 import PostalMime from 'postal-mime';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
@@ -11,45 +11,33 @@ import { calculateSignalLength } from '@/lib/code-gen/utils';
 import { Entry } from '@/lib/utils/types';
 import { Check, X } from 'lucide-react';
 import { SimpleDialog } from '../components/ui/SimpleDialog';
+import { ProofStatus } from '@/lib/utils/ZkRegex';
+import { useSwitchChain } from 'wagmi';
+import InputDataDisplay from '../components/ui/EmailDataDisplay';
+
 
 export interface ContentProps {
   entry: Entry;
 }
 
-// type RawEmailResponse = {
-//   subject: string;
-//   internalDate: string;
-//   decodedContents: string;
-// };
-
-// type Email2 = {
-//     subject: string;
-//     internalDate: string;
-//     selected: boolean;
-//     inputs?: any;
-//     error?: string;
-//   };
-  
-
-// type Email = RawEmailResponse & { selected: boolean, inputs?: any, error?: string, body?: string };
-
 type RawEmailResponse = {
-    subject: string;
-    internalDate: string;
-    decodedContents: string;
-  };
-  
-  type Email = RawEmailResponse & { 
-    selected: boolean, 
-    inputs?: any, 
-    error?: string, 
-    body?: string 
-  };
+  subject: string;
+  internalDate: string;
+  decodedContents: string;
+};
+
+type Email = RawEmailResponse & {
+  selected: boolean;
+  inputs?: any;
+  error?: string;
+  body?: string;
+};
+
 export function VerifyContent(props: ContentProps) {
-  const workers = new Map<string, boolean>();
+  const workers = useRef(new Map<string, boolean>());
   const entry = props.entry;
   const [isGeneratingProof, setIsGeneratingProof] = useState(false);
-  const [renderTrigger, setRenderTrigger] = useState(0)
+  const [renderTrigger, setRenderTrigger] = useState(0);
   const { data: session } = useSession();
   const {
     createInputWorker,
@@ -60,10 +48,20 @@ export function VerifyContent(props: ContentProps) {
   } = useZkRegex();
 
   const account = useAccount();
-
   const [messages, setMessages] = useState<Email[]>([]);
   const [signalLength, setSignalLength] = useState<number>(1);
   const [emailUploaded, setEmailUploaded] = useState(false);
+  const { switchChain } = useSwitchChain();
+
+  const [activeJob, setActiveJob] = useState(null);
+
+  const toggleJobView = (jobId : any) => {
+    setActiveJob(activeJob === jobId ? null : jobId);
+  };
+  useEffect(() => {
+     switchChain({ chainId: 11155111});
+    }, []);
+
 
   useEffect(() => {
     console.log("Component rendered. Messages:", messages);
@@ -92,7 +90,7 @@ export function VerifyContent(props: ContentProps) {
     try {
       const res = await fetchEmailList(session?.accessToken as string, { q: query });
       if (!res.messages) {
-        throw new Error(`Failed to fetch emails`);
+        throw new Error('Failed to fetch emails');
       }
       const messageIds = res.messages.map((message: any) => message.id);
       const emails = await fetchEmailsRaw(session?.accessToken as string, messageIds);
@@ -107,53 +105,53 @@ export function VerifyContent(props: ContentProps) {
   }
 
   useEffect(() => {
-    if (workers.get(entry.slug)) {
+    if (workers.current.get(entry.slug)) {
       return;
     }
     createInputWorker(entry.slug);
-    workers.set(entry.slug, true);
-    setSignalLength(calculateSignalLength((entry?.parameters as any).values as any));
-  }, []);
+    workers.current.set(entry.slug, true);
+    setSignalLength(calculateSignalLength(entry.parameters.values));
+  }, [entry, createInputWorker]);
 
   const { data: hash, error, isPending, writeContract } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed, isError, error: txError } =
     useWaitForTransactionReceipt({ hash });
 
-    async function startProofGeneration() {
-        console.log("Starting proof generation");
-        setIsGeneratingProof(true);
-        
+  async function startProofGeneration() {
+    console.log("Starting proof generation");
+    setIsGeneratingProof(true);
+
+    try {
+      const selectedMessages = messages.filter(message => message.selected && message.inputs);
+      console.log("Selected messages:", selectedMessages);
+
+      if (selectedMessages.length === 0) {
+        console.log("No messages selected for proof generation");
+        alert("Please select at least one valid email for proof generation.");
+        return;
+      }
+
+      for (const message of selectedMessages) {
+        console.log("Generating proof for message:", message.subject);
         try {
-          const selectedMessages = messages.filter(message => message.selected && message.inputs);
-          console.log("Selected messages:", selectedMessages);
-    
-          if (selectedMessages.length === 0) {
-            console.log("No messages selected for proof generation");
-            alert("Please select at least one valid email for proof generation.");
-            return;
-          }
-    
-          for (const message of selectedMessages) {
-            console.log("Generating proof for message:", message.subject);
-            try {
-              const proofRes = await generateProofRemotely(entry.slug, message.inputs);
-              console.log('Proof generation result:', proofRes);
-              // You might want to update some state here to reflect the new proof
-            } catch (error) {
-              console.error("Error generating proof for message:", message.subject, error);
-              alert(`Error generating proof for message: ${message.subject}`);
-            }
-          }
-    
-          console.log("Proof generation completed");
-          alert("Proof generation completed. Check the 'View generated proofs' section.");
+          const proofRes = await generateProofRemotely(entry.slug, message.inputs);
+          console.log('Proof generation result:', proofRes);
+          // You might want to update some state here to reflect the new proof
         } catch (error) {
-          console.error("Error in proof generation process:", error);
-          alert("An error occurred during the proof generation process. Please check the console for more details.");
-        } finally {
-          setIsGeneratingProof(false);
+          console.error("Error generating proof for message:", message.subject, error);
+          alert(`Error generating proof for message: ${message.subject}`);
         }
       }
+
+      console.log("Proof generation completed");
+    //   alert("Proof generation completed. Check the 'View generated proofs' section.");
+    } catch (error) {
+      console.error("Error in proof generation process:", error);
+      alert("An error occurred during the proof generation process. Please check the console for more details.");
+    } finally {
+      setIsGeneratingProof(false);
+    }
+  }
 
   async function mapEmail(email: RawEmailResponse): Promise<Email> {
     let inputs;
@@ -220,9 +218,7 @@ export function VerifyContent(props: ContentProps) {
                   <td>{new Date(message.internalDate).toLocaleString()}</td>
                   <td>{message.subject}</td>
                   <td>
-                    <pre className="whitespace-pre-wrap text-xs">
-                      {JSON.stringify(message.inputs, null, 2)}
-                    </pre>
+                    <InputDataDisplay inputs={message.inputs || {}} />
                   </td>
                 </tr>
               ))}
@@ -232,7 +228,6 @@ export function VerifyContent(props: ContentProps) {
       </div>
     );
   }
-
   function displayProofJobs() {
     if (Object.keys(proofStatus).length === 0) {
       return;
@@ -295,7 +290,7 @@ export function VerifyContent(props: ContentProps) {
 
   function displayProofJobsToBeVerified() {
     if (Object.keys(proofStatus).length === 0) {
-      return;
+      return null;
     } else {
       return (
         <div className="overflow-x-auto">
@@ -314,42 +309,64 @@ export function VerifyContent(props: ContentProps) {
               {Object.keys(proofStatus)
                 .filter((id) => proofStatus[id].status === 'COMPLETED')
                 .map((id) => (
-                  <tr key={id}>
-                    <td>
-                      <button
-                        className="btn"
-                        disabled={isPending || isConfirming}
-                        onClick={() => verifyProof(id)}
-                      >
-                        Verify
-                      </button>
-                    </td>
-                    <td className="font-medium">{proofStatus[id].id}</td>
-                    <td>
-                      <pre>{JSON.stringify(parseOutput(entry, proofStatus[id].publicOutput), null, 2)}</pre>
-                    </td>
-                    <td>
-                      <SimpleDialog title="Proof" trigger={<button className="btn btn-link">View</button>}>
-                        <code>
-                          <pre>{JSON.stringify(proofStatus[id].proof, null, 2)}</pre>
-                        </code>
-                      </SimpleDialog>
-                    </td>
-                    <td>
-                      <SimpleDialog title="Public Output" trigger={<button className="btn btn-link">View</button>}>
-                        <code>
-                          <pre>{JSON.stringify(proofStatus[id].publicOutput, null, 2)}</pre>
-                        </code>
-                      </SimpleDialog>
-                    </td>
-                    <td>
-                      <SimpleDialog title="Contract Calldata" trigger={<button className="btn btn-link">View</button>}>
-                        <code>
-                          <pre>{JSON.stringify(circuitOutputToArgs({ proof: proofStatus[id].proof, public: proofStatus[id].publicOutput }), null, 2)}</pre>
-                        </code>
-                      </SimpleDialog>
-                    </td>
-                  </tr>
+                  <React.Fragment key={id}>
+                    <tr>
+                      <td>
+                        <button
+                          className="btn"
+                          disabled={isPending || isConfirming}
+                          onClick={() => {
+                            console.log('Button state:', { isPending, isConfirming });
+                            verifyProof(id)}}
+                        >
+                          Verify
+                        </button>
+                      </td>
+                      <td className="font-medium">{proofStatus[id].id}</td>
+                      <td>
+                        <pre>{JSON.stringify(parseOutput(entry.parameters, proofStatus[id].publicOutput), null, 2)}</pre>
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-link"
+                          onClick={() => toggleJobView(`proof-${id}`)}
+                        >
+                          View
+                        </button>
+                        {activeJob === `proof-${id}` && (
+                          <pre className="whitespace-pre-wrap mt-2">
+                            <code>{JSON.stringify(proofStatus[id].proof, null, 2)}</code>
+                          </pre>
+                        )}
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-link"
+                          onClick={() => toggleJobView(`public-${id}`)}
+                        >
+                          View
+                        </button>
+                        {activeJob === `public-${id}` && (
+                          <pre className="whitespace-pre-wrap mt-2">
+                            <code>{JSON.stringify(proofStatus[id].publicOutput, null, 2)}</code>
+                          </pre>
+                        )}
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-link"
+                          onClick={() => toggleJobView(`calldata-${id}`)}
+                        >
+                          View
+                        </button>
+                        {activeJob === `calldata-${id}` && (
+                          <pre className="whitespace-pre-wrap mt-2">
+                            <code>{JSON.stringify(circuitOutputToArgs({ proof: proofStatus[id].proof, public: proofStatus[id].publicOutput }), null, 2)}</code>
+                          </pre>
+                        )}
+                      </td>
+                    </tr>
+                  </React.Fragment>
                 ))}
             </tbody>
           </table>
@@ -379,37 +396,37 @@ export function VerifyContent(props: ContentProps) {
             try {
               const parsed = await PostalMime.parse(contents);
               console.log("Parsed email:", JSON.stringify(parsed, null, 2));
-  
+
               let inputs: any;
               let error: string | undefined;
-  
+
               try {
                 console.log("Generating inputs with slug:", entry.slug);
                 inputs = await generateInputFromEmail(entry.slug, contents);
                 console.log("Generated inputs:", JSON.stringify(inputs, null, 2));
               } catch (e: any) {
                 console.error("Error generating inputs:", e);
-                error = e.toString();
+                error = "Error generating inputs: " + e.message;
               }
-  
+
               const email: Email = {
                 decodedContents: contents,
                 internalDate: parsed.date ? parsed.date.toString() : new Date().toISOString(),
                 subject: parsed.subject || file.name,
-                selected: false,
+                selected: true,
                 inputs,
                 error,
                 body: parsed.text,
               };
-  
+
               console.log("New email object:", JSON.stringify(email, null, 2));
-  
+
               setMessages(prevMessages => {
                 const newMessages = [...prevMessages, email];
                 console.log("Updating messages state. New state:", JSON.stringify(newMessages, null, 2));
                 return newMessages;
               });
-  
+
               setEmailUploaded(true);
               setRenderTrigger(prev => prev + 1);
             } catch (error) {
@@ -423,45 +440,45 @@ export function VerifyContent(props: ContentProps) {
   }
 
   return (
-    <div className="w-full py-20 lg:py-40">
-    <div className="container mx-auto">
-      <div className="flex flex-col gap-10">
-        <div className="flex text-left justify-center items-center gap-4 flex-col">
-          <div className="flex gap-2 flex-col w-full">
-            <div className="mb-4">
-              <h2 className="text-3xl md:text-5xl tracking-tighter text-left font-extrabold mb-6">
-                {entry.slug}
-              </h2>
-              <h4 className="text-xl md:text-2xl tracking-tighter text-left font-extrabold mb-4 mt-4">
-                Step 1: Provide an email sample
-              </h4>
-              <p className="mb-4">You can either connect your gmail or upload a .eml file. Your google API key is kept locally and never sent out to any of our servers.</p>
-              {session?.user?.email && <p className="mb-2"><b>Logged in as: {session.user.email}</b></p>}
-              <div className="flex flex-row">
-                {displayGoogleLoginButton(!!session?.user)}
-                <div>
-                  <input className="ml-4" type="file" onChange={(e) => uploadEmail(e)} />
+    <div className="min-h-screen w-full flex flex-col">
+      <div className="container w-full">
+        <div className="flex flex-col gap-10">
+          <div className="flex text-left justify-center items-center gap-4 flex-col">
+            <div className="flex gap-2 flex-col w-full">
+              <div className="mb-4">
+                <h2 className="text-3xl md:text-5xl tracking-tighter text-left font-extrabold mb-6">
+                  {entry.slug}
+                </h2>
+                <h4 className="text-xl md:text-2xl tracking-tighter text-left font-extrabold mb-4 mt-4">
+                  Step 1: Provide an email sample
+                </h4>
+                <p className="mb-4">You can either connect your gmail or upload a .eml file. Your google API key is kept locally and never sent out to any of our servers.</p>
+                {session?.user?.email && <p className="mb-2"><b>Logged in as: {session.user.email}</b></p>}
+                <div className="flex flex-row">
+                  {displayGoogleLoginButton(!!session?.user)}
+                  <div>
+                    <input className="ml-4" type="file" onChange={(e) => uploadEmail(e)} />
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="mb-4">
-              <h4 className="text-xl md:text-2xl tracking-tighter text-left font-extrabold mb-4">
-                Step 2: Select the emails you want the proofs created for
-              </h4>
-              <p>Choose the emails you want to create proofs for. You can select multiple emails.</p>
-              <p>If you select to create the proofs remotely, your emails will be sent to our secured service for proof generation. Emails will be deleted once the proofs are generated</p>
-              {displayEmailList()}
-              <div>
-                <button 
-                  className="btn" 
-                  onClick={startProofGeneration} 
-                  disabled={isGeneratingProof}
-                >
-                  {isGeneratingProof ? "Generating proof..." : "Create proof remotely"}
-                </button>
-                <button className="btn ml-4" disabled>Create proof locally (WIP)</button>
+              <div className="mb-4">
+                <h4 className="text-xl md:text-2xl tracking-tighter text-left font-extrabold mb-4">
+                  Step 2: Select the emails you want the proofs created for
+                </h4>
+                <p>Choose the emails you want to create proofs for. You can select multiple emails.</p>
+                <p>If you select to create the proofs remotely, your emails will be sent to our secured service for proof generation. Emails will be deleted once the proofs are generated</p>
+                {displayEmailList()}
+                <div>
+                    <button 
+                    className="btn" 
+                    onClick={startProofGeneration} 
+                    disabled={isGeneratingProof}
+                    >
+                    {isGeneratingProof ? "Generating proof..." : "Create proof remotely"}
+                    </button>
+                    <button className="btn ml-4" disabled>Create proof locally (WIP)</button>
+                </div>
               </div>
-            </div>
               <div className="mb-4">
                 <h4 className="text-2xl md:text-2xl tracking-tighter max-w-xl text-left font-extrabold mb-4">
                   Step 3: View generated proofs
@@ -512,27 +529,28 @@ export function VerifyContent(props: ContentProps) {
               </div>
               <button className="btn mt-2" onClick={() => setRenderTrigger(prev => prev + 1)}>
                 Force Re-render
-                </button>
-                <button className="btn mt-2" onClick={() => console.log("Current messages state:", messages)}>
+              </button>
+              <button className="btn mt-2" onClick={() => console.log("Current messages state:", messages)}>
                 Log Messages State
-                </button>
-                <button 
-                    className="btn mt-2" 
-                    onClick={() => setMessages([...messages, {
-                        subject: "Test",
-                        internalDate: new Date().toISOString(),
-                        selected: false,
-                        decodedContents: "This is a test email content.",
-                        inputs: {},
-                        error: undefined,
-                        body: "This is a test email body."
-                    }])}>
-                    Add Test Message
-                    </button>
+              </button>
+              <button 
+                className="btn mt-2" 
+                onClick={() => setMessages([...messages, {
+                    subject: "Test",
+                    internalDate: new Date().toISOString(),
+                    selected: false,
+                    decodedContents: "This is a test email content.",
+                    inputs: {},
+                    error: undefined,
+                    body: "This is a test email body."
+                }])}
+              >
+                Add Test Message
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
   );
-                }
+}

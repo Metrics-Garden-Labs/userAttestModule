@@ -22,15 +22,38 @@ export default function ProfilePage() {
   const { data: session } = useSession();
 
   const entry: Entry = {
-    id: 1,
-    slug: 'example-entry',
-    parameters: {},
-    emailQuery: '',
-    contractAddress: '0xYourContractAddress',
-    verifierContractAddress: '0xYourVerifierContractAddress',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  };
+    id: 1,  
+    slug: "zk-email/proof-of-github",
+    parameters: {
+        name: "GithubProof",
+        values: [
+            {
+                name: "username",
+                parts: [
+                    { is_public: false, regex_def: "^Hey " },
+                    { is_public: true, regex_def: "[a-zA-Z0-9-]+" }
+                ],
+                regex: "",
+                location: "body",
+                maxLength: 64,
+                prefixRegex: "",
+                revealStates: []
+            }
+        ],
+        version: "v2",
+        dkimSelector: "pf2023",
+        senderDomain: "github.com",
+        emailBodyMaxLength: 640,
+        ignoreBodyHashCheck: false,
+        shaPrecomputeSelector: ""
+    },
+    emailQuery: "[GitHub] A third-party OAuth application has been added to your account from: noreply@github.com",
+    contractAddress: "0xd8f77783b77ab4a128c98f40ba2bb44b7255c5a9",
+    verifierContractAddress: "0x0f8060ac4e4a376dcf821fed126b3ac1e74b9c8e",
+    createdAt: new Date(),  // Assuming current date. Replace with actual date if available.
+    updatedAt: new Date()   // Assuming current date. Replace with actual date if available.
+};
+
 
   const tabClasses = (tabName: string) =>
     `cursor-pointer px-4 py-2 text-sm font-semibold mr-2 ${

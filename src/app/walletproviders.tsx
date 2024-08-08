@@ -22,6 +22,7 @@ import {
     celo,
     blast,
     linea,
+    sepolia,
     
 } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -51,6 +52,7 @@ const config = getDefaultConfig({
         celo,
         blast,
         linea,
+        sepolia,
         // ...(process.env.NEXT_PUBLIC_ENABLE_TESTNETS === 'true' ? [sepolia] : []),
     ],
     ssr: true,
