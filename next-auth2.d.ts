@@ -1,9 +1,8 @@
-import NextAuth, { DefaultSession } from "next-auth";
+import NextAuth, { DefaultSession, DefaultUser } from "next-auth";
+import { JWT } from "next-auth/jwt";
 
 declare module "next-auth" {
-  interface Session {
-    accessToken?: string;
-    provider?: "google" | "github";
+  interface Session extends DefaultSession {
     user: {
       googleName?: string;
       githubName?: string;
@@ -11,12 +10,16 @@ declare module "next-auth" {
       githubEmail?: string;
       googleImage?: string;
       githubImage?: string;
+      googleAccessToken?: string;
+      githubAccessToken?: string;
     } & DefaultSession["user"];
   }
+}
 
+declare module "next-auth/jwt" {
   interface JWT {
-    accessToken?: string;
-    provider?: "google" | "github";
+    googleAccessToken?: string;
+    githubAccessToken?: string;
     googleName?: string;
     githubName?: string;
     googleEmail?: string;

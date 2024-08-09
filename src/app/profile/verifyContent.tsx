@@ -174,7 +174,11 @@ export function VerifyContent(props: ContentProps) {
     };
   }
 
-  function displayGoogleLoginButton(isGoogleAuthed: boolean) {
+  function displayGoogleLoginButton() {
+    const { data: session, status } = useSession();
+    
+    const isGoogleAuthed = !!session?.user?.googleEmail;
+  
     return (
       <button
         className={`
@@ -187,8 +191,13 @@ export function VerifyContent(props: ContentProps) {
           ${isGoogleAuthed ? 'focus:ring-red-500' : 'focus:ring-blue-500'}
         `}
         onClick={() => isGoogleAuthed ? signOut() : signIn('google')}
+        disabled={status === 'loading'}
       >
-        {isGoogleAuthed ? 'Logout' : 'Login with Google'}
+        {status === 'loading' 
+          ? 'Loading...' 
+          : isGoogleAuthed 
+            ? 'Logout from Google' 
+            : 'Login with Google'}
       </button>
     );
   }
@@ -477,10 +486,10 @@ export function VerifyContent(props: ContentProps) {
               <li>Nothing touches our servers, everything is client side!</li>
             </ul>
             <div className="flex items-center space-x-4 mt-4">
-              {displayGoogleLoginButton(!!session?.user)}
+              {displayGoogleLoginButton()}
               <FileUploadInput onUpload={(e) => uploadEmail(e)} />
             </div>
-            {session?.user?.email && <p className="mt-2">Logged in as: <b>{session.user.email}</b></p>}
+            {session?.user?.googleEmail && <p className="mt-2">Logged in as: <b>{session.user.googleEmail}</b></p>}
           </section>
   
           <section>

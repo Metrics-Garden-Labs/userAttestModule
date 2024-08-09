@@ -53,7 +53,7 @@ export default function Navbar() {
             <p className="text-white text-md md:text-sm hover:text-opacity-75">SEARCH USERS</p>
           </Link>
           {status === 'authenticated' && (
-            <Link href={`/profile/${session?.user?.name}`}>
+            <Link href={`/profile/${session?.user?.githubName || session?.user?.name}`}>
               <p className="text-white lg:text-md md:text-sm hover:text-opacity-75">PROFILE</p>
             </Link>
           )}
@@ -67,15 +67,15 @@ export default function Navbar() {
                 showBalance={false}
               />
               <Image
-                src={session?.user?.image || ""}
-                alt={session?.user?.name || ""}
+                src={session?.user?.githubImage || session?.user?.image || ""}
+                alt={session?.user?.githubName || session?.user?.name || ""}
                 width={40}
                 height={40}
                 className="rounded-full cursor-pointer"
                 onClick={toggleDropdown}
               />
               <p className="text-white cursor-pointer" onClick={toggleDropdown}>
-                {session?.user?.name || ""}
+                {session?.user?.githubName || session?.user?.name || ""}
               </p>
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
@@ -89,20 +89,12 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <>
-              {/* <button
-                onClick={() => signIn('google')}
-                className="bg-blue-500 text-white px-2 py-1 rounded-md mr-2"
-              >
-                Sign in with Google 
-              </button>*/}
-              <button
-                onClick={() => signIn('github')}
-                className="bg-black text-white px-2 py-1 rounded-md"
-              >
-                Sign in with GitHub
-              </button>
-            </>
+            <button
+              onClick={() => signIn('github')}
+              className="bg-black text-white px-2 py-1 rounded-md"
+            >
+              Sign in with GitHub
+            </button>
           )}
           <div className="md:hidden ml-4">
             <button className="text-white focus:outline-none" onClick={toggleSidebar}>
@@ -131,7 +123,7 @@ export default function Navbar() {
             </Link>
           </li>
           <li>
-            <Link href="/profile">
+            <Link href={`/profile/${session?.user?.githubName || session?.user?.name}`}>
               <p className="block py-2" onClick={closeSidebar}>PROFILE</p>
             </Link>
           </li>
