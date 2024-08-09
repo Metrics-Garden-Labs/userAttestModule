@@ -2,7 +2,6 @@ import React, { useState, useEffect, FormEvent, useRef, use } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { fetchEmailList, fetchEmailsRaw, useZkRegex } from '@zk-email/zk-regex-sdk';
 import PostalMime from 'postal-mime';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import { BaseError, Hex } from 'viem';
 import '@rainbow-me/rainbowkit/styles.css';
@@ -14,6 +13,7 @@ import { SimpleDialog } from '../components/ui/SimpleDialog';
 import { ProofStatus } from '@/lib/utils/ZkRegex';
 import { useSwitchChain } from 'wagmi';
 import InputDataDisplay from '../components/ui/EmailDataDisplay';
+import FileUploadInput from '../components/ui/UploadFile';
 
 
 export interface ContentProps {
@@ -75,6 +75,7 @@ export function VerifyContent(props: ContentProps) {
     if (!inputWorkers[entry.slug] || !session?.accessToken) {
       return;
     }
+    console.log("session token:", session?.accessToken);
     filterEmails(entry.emailQuery);
   }, [session?.accessToken, inputWorkers]);
 
@@ -174,13 +175,24 @@ export function VerifyContent(props: ContentProps) {
   }
 
   function displayGoogleLoginButton(isGoogleAuthed: boolean) {
-    if (isGoogleAuthed) {
-      return <button className="btn" onClick={() => signOut()}>Logout</button>;
-    } else {
-      return <button className="btn" onClick={() => signIn('google')}>Login with Google</button>;
-    }
+    return (
+      <button
+        className={`
+          px-4 py-2 h-12 rounded-md font-medium text-white
+          shadow-md transition-all duration-300 ease-in-out
+          ${isGoogleAuthed 
+            ? 'bg-red-500 hover:bg-red-600' 
+            : 'bg-blue-500 hover:bg-blue-600'}
+          focus:outline-none focus:ring-2 focus:ring-offset-2
+          ${isGoogleAuthed ? 'focus:ring-red-500' : 'focus:ring-blue-500'}
+        `}
+        onClick={() => isGoogleAuthed ? signOut() : signIn('google')}
+      >
+        {isGoogleAuthed ? 'Logout' : 'Login with Google'}
+      </button>
+    );
   }
-
+  
   function displayEmailList() {
     console.log("Displaying email list. Messages:", JSON.stringify(messages, null, 2));
     return (
@@ -202,13 +214,21 @@ export function VerifyContent(props: ContentProps) {
               {messages.map((message, index) => (
                 <tr key={index}>
                   <td className="font-medium">
-                    <input
-                      type="checkbox"
-                      className="checkbox"
-                      disabled={!!message.error}
-                      onChange={(e) => selectEmail(e.target.checked, index)}
-                      checked={message.selected}
-                    />
+                    <div className="flex items-center justify-center">
+                    <div
+                      className={`w-6 h-6 border-2 rounded flex items-center justify-center cursor-pointer
+                        ${message.error ? 'bg-gray-200 cursor-not-allowed' : 'hover:bg-gray-100'}
+                        ${message.selected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!message.error) {
+                          selectEmail(!message.selected, index);
+                        }
+                      }}
+                    >
+                        {message.selected && <Check size={16} color="blue" />}
+                      </div>
+                    </div>
                   </td>
                   <td>
                     <div className="tooltip" data-tip={message.error ? message.error : "Email is valid"}>
@@ -228,6 +248,7 @@ export function VerifyContent(props: ContentProps) {
       </div>
     );
   }
+
   function displayProofJobs() {
     if (Object.keys(proofStatus).length === 0) {
       return;
@@ -313,7 +334,7 @@ export function VerifyContent(props: ContentProps) {
                     <tr>
                       <td>
                         <button
-                          className="btn"
+                          className="btn bg-blue-500 hover:bg-blue-600 text-white"
                           disabled={isPending || isConfirming}
                           onClick={() => {
                             console.log('Button state:', { isPending, isConfirming });
@@ -440,115 +461,78 @@ export function VerifyContent(props: ContentProps) {
   }
 
   return (
-    <div className="min-h-screen w-full flex flex-col">
-      <div className="container w-full">
-        <div className="flex flex-col gap-10">
-          <div className="flex text-left justify-center items-center gap-4 flex-col">
-            <div className="flex gap-2 flex-col w-full">
-              <div className="mb-4">
-                <h2 className="text-3xl md:text-5xl tracking-tighter text-left font-extrabold mb-6">
-                  {entry.slug}
-                </h2>
-                <h4 className="text-xl md:text-2xl tracking-tighter text-left font-extrabold mb-4 mt-4">
-                  Step 1: Provide an email sample
-                </h4>
-                <p className="mb-4">You can either connect your gmail or upload a .eml file. Your google API key is kept locally and never sent out to any of our servers.</p>
-                {session?.user?.email && <p className="mb-2"><b>Logged in as: {session.user.email}</b></p>}
-                <div className="flex flex-row">
-                  {displayGoogleLoginButton(!!session?.user)}
-                  <div>
-                    <input className="ml-4" type="file" onChange={(e) => uploadEmail(e)} />
-                  </div>
-                </div>
-              </div>
-              <div className="mb-4">
-                <h4 className="text-xl md:text-2xl tracking-tighter text-left font-extrabold mb-4">
-                  Step 2: Select the emails you want the proofs created for
-                </h4>
-                <p>Choose the emails you want to create proofs for. You can select multiple emails.</p>
-                <p>If you select to create the proofs remotely, your emails will be sent to our secured service for proof generation. Emails will be deleted once the proofs are generated</p>
-                {displayEmailList()}
-                <div>
-                    <button 
-                    className="btn" 
-                    onClick={startProofGeneration} 
-                    disabled={isGeneratingProof}
-                    >
-                    {isGeneratingProof ? "Generating proof..." : "Create proof remotely"}
-                    </button>
-                    <button className="btn ml-4" disabled>Create proof locally (WIP)</button>
-                </div>
-              </div>
-              <div className="mb-4">
-                <h4 className="text-2xl md:text-2xl tracking-tighter max-w-xl text-left font-extrabold mb-4">
-                  Step 3: View generated proofs
-                </h4>
-                {displayProofJobs()}
-              </div>
-              <div className="mb-4">
-                <h4 className="text-2xl md:text-2xl tracking-tighter max-w-xl text-left font-extrabold mb-4">
-                  Step 4: Verify proofs on-chain (Sepolia)
-                </h4>
-                <div className="flex flex-row items-center">
-                  <p><b className="font-extrabold">Verification Contract:</b> {entry.contractAddress}</p>
-                  <SimpleDialog title="Verification Contract" trigger={<button className="btn btn-link font-extrabold">View ABI</button>}>
-                    <code className="text-xs">
-                      <pre>
-                        {JSON.stringify([{
-                          inputs: [
-                            { internalType: 'uint256[2]', name: 'a', type: 'uint256[2]' },
-                            { internalType: 'uint256[2][2]', name: 'b', type: 'uint256[2][2]' },
-                            { internalType: 'uint256[2]', name: 'c', type: 'uint256[2]' },
-                            {
-                              internalType: `uint256[${signalLength}]`,
-                              name: 'signals',
-                              type: `uint256[${signalLength}]`,
-                            },
-                          ],
-                          name: 'verify',
-                          outputs: [],
-                          stateMutability: 'nonpayable',
-                          type: 'function',
-                        }], null, 2)}
-                      </pre>
-                    </code>
-                  </SimpleDialog>
-                </div>
-                <p><b className="font-bold">Groth16 Contract:</b> {entry.verifierContractAddress}</p>
-                <ConnectButton />
-                {displayProofJobsToBeVerified()}
-                {hash && <p>Transaction hash: {hash}</p>}
-                {isConfirming && <div>Waiting for confirmation...</div>}
-                {isConfirmed && <div>Transaction is successful.</div>}
-                {error && (
-                  <div>Error: {(error as BaseError).shortMessage || error.message}</div>
-                )}
-                {txError && (
-                  <div>Error: {(txError as BaseError).shortMessage || txError.message}</div>
-                )}
-              </div>
-              <button className="btn mt-2" onClick={() => setRenderTrigger(prev => prev + 1)}>
-                Force Re-render
-              </button>
-              <button className="btn mt-2" onClick={() => console.log("Current messages state:", messages)}>
-                Log Messages State
-              </button>
-              <button 
-                className="btn mt-2" 
-                onClick={() => setMessages([...messages, {
-                    subject: "Test",
-                    internalDate: new Date().toISOString(),
-                    selected: false,
-                    decodedContents: "This is a test email content.",
-                    inputs: {},
-                    error: undefined,
-                    body: "This is a test email body."
-                }])}
-              >
-                Add Test Message
-              </button>
+    <div className="min-h-screen w-full" onClick={(e) => e.stopPropagation}>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <h2 className="text-2xl font-bold mb-6">
+          Verify Ownership of your Github account!
+        </h2>
+        
+        <div className="space-y-8">
+          <section>
+            <h4 className="text-xl font-semibold mb-4">
+              1. Please provide an email sample
+            </h4>
+            <ul className="list-disc pl-5 mb-4">
+              <li>You can either connect your Gmail using the button below or upload / drag & drop a .eml file.</li>
+              <li>Nothing touches our servers, everything is client side!</li>
+            </ul>
+            <div className="flex items-center space-x-4 mt-4">
+              {displayGoogleLoginButton(!!session?.user)}
+              <FileUploadInput onUpload={(e) => uploadEmail(e)} />
             </div>
-          </div>
+            {session?.user?.email && <p className="mt-2">Logged in as: <b>{session.user.email}</b></p>}
+          </section>
+  
+          <section>
+            <h4 className="text-xl font-semibold mb-4">
+              2. Select the emails you want the proofs created for
+            </h4>
+            <p className="mb-2">Choose the emails you want to create proofs for. You can select multiple emails.</p>
+            <p className="mb-4">If you select to create the proofs remotely, your emails will be sent to our secured service for proof generation. Emails will be deleted once the proofs are generated.</p>
+            {displayEmailList()}
+            <button 
+              className="mt-4 btn bg-blue-500 hover:bg-blue-600 text-white"
+              onClick={startProofGeneration}
+              disabled={isGeneratingProof}
+            >
+              {isGeneratingProof ? "Generating proof..." : "Create proof remotely"}
+            </button>
+          </section>
+  
+          <section>
+            <h4 className="text-xl font-semibold mb-4">
+              3. View generated proofs
+            </h4>
+            {displayProofJobs()}
+          </section>
+  
+          <section>
+            <h4 className="text-xl font-semibold mb-4">
+              4. Verify proofs on-chain (Sepolia)
+            </h4>
+            <p><b>Verification Contract:</b> {entry.contractAddress}</p>
+            <p><b>Groth16 Contract:</b> {entry.verifierContractAddress}</p>
+            {displayProofJobsToBeVerified()}
+            {hash && <p>Transaction hash: {hash}</p>}
+            {isConfirming && <div>Waiting for confirmation...</div>}
+            {isConfirmed && <div>Transaction is successful.</div>}
+            {error && <div>Error: {(error as BaseError).shortMessage || error.message}</div>}
+            {txError && <div>Error: {(txError as BaseError).shortMessage || txError.message}</div>}
+          </section>
+  
+          <section>
+            <h4 className="text-xl font-semibold mb-4">
+              5. Attest to your Ownership!
+            </h4>
+            <p className="mb-4">Once you have verified your proofs on-chain, you can attest to your ownership of the Github account.</p>
+            <button 
+              className="btn bg-blue-500 hover:bg-blue-600 text-white"
+              onClick={() => alert("Attested!")}
+            >
+              Attest Ownership
+            </button>
+            <p className="mt-2">Here is a link to your attestation!</p>
+          </section>
         </div>
       </div>
     </div>

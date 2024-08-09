@@ -48,6 +48,7 @@ export default function ProfilePage() {
         shaPrecomputeSelector: ""
     },
     emailQuery: "[GitHub] A third-party OAuth application has been added to your account from: noreply@github.com",
+
     contractAddress: "0xd8f77783b77ab4a128c98f40ba2bb44b7255c5a9",
     verifierContractAddress: "0x0f8060ac4e4a376dcf821fed126b3ac1e74b9c8e",
     createdAt: new Date(),  // Assuming current date. Replace with actual date if available.
@@ -169,8 +170,7 @@ export default function ProfilePage() {
       case 'verify':
         return (
         <div className="text-black text-left">
-            <h3 className="font-semibold mb-4">Verify your Github</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 mx-3 lg:gap-8 max-w-6xl overflow-y-auto">
+            <div className="w-full overflow-y-auto">
               <VerifyContent entry={entry} />
 
             </div>
