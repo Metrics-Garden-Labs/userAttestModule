@@ -8,3 +8,14 @@ export interface Entry {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface Users {
+  id: number;
+  githubId: string;
+  name: string;
+  email: string;
+  avatarUrl: string;
+  bio: string;
+  url: string;
+  createdAt: Date;
+}

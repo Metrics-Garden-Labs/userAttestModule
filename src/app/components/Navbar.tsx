@@ -6,6 +6,7 @@ import { FaBars, FaTimes } from 'react-icons/fa';
 import { isMobile } from 'react-device-detect';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import FetchAndStoreUser from './FetchAndStoreUser';
 
 export default function Navbar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -35,6 +36,8 @@ export default function Navbar() {
 
   return (
     <>
+    <FetchAndStoreUser />
+
       <div className="flex justify-between items-center navbar bg-headerblack text-neutral-content p-3 md:p-8">
         <Link href="/">
           <p
@@ -87,12 +90,12 @@ export default function Navbar() {
             </div>
           ) : (
             <>
-              <button
+              {/* <button
                 onClick={() => signIn('google')}
                 className="bg-blue-500 text-white px-2 py-1 rounded-md mr-2"
               >
-                Sign in with Google
-              </button>
+                Sign in with Google 
+              </button>*/}
               <button
                 onClick={() => signIn('github')}
                 className="bg-black text-white px-2 py-1 rounded-md"
