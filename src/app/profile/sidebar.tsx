@@ -1,32 +1,30 @@
-
-
-//thinking about making this a server component that gets the attestation count when you visit and
-//doenst update until you refresh the page when you make a contribution.
-//otherwise its too much hassle to make it a client component and have it update in real time.
-//TODO: make this a server component
 'use client';
-import { Fragment, SetStateAction, useState, Dispatch, useEffect } from 'react';
+import { useEffect } from 'react';
 import { LuArrowUpRight } from "react-icons/lu";
-// import { Project } from '../../src/types';
 import Image from 'next/image';
-// import { NEXT_PUBLIC_URL } from '@/src/config/config';
-// import {useGlobalState} from '@/src/config/config';
 import Link from 'next/link';
 import { BsGlobe2 } from 'react-icons/bs';
-import { FaGithub} from 'react-icons/fa6';
+import { FaGithub } from 'react-icons/fa6';
 import { useSession } from 'next-auth/react';
-// import { getAttestationCountByProject } from '@/src/lib/db/dbattestations';
+import useLocalStorage from '@/hooks/useLocalStorage';
 
-function classNames(...classes: any[]) {
+function classNames(...classes: (string | undefined)[]) {
   return classes.filter(Boolean).join(' ');
 }
 
-
-
-
-const Sidebar = ()=> {
+const Sidebar = () => {
   const { data: session, status } = useSession();
+  const [githubName, setGithubName] = useLocalStorage<string>('githubName', '');
+  const [githubImage, setGithubImage] = useLocalStorage<string>('githubImage', '');
 
+  useEffect(() => {
+    if (session?.user?.name && session.provider === 'github') {
+      setGithubName(session.user.name);
+    }
+    if (session?.user?.image && session.provider === 'github') {
+      setGithubImage(session.user.image);
+    }
+  }, [session, setGithubName, setGithubImage]);
 
   const getProjectDuration = (createdAt: Date | null | undefined) => {
     if (!createdAt) return 'Unknown';
@@ -38,44 +36,38 @@ const Sidebar = ()=> {
 
     return `${diffInMonths} months`;
   };
-    
 
   return (
     <>
       <div className='hidden lg:block lg:w-72 bg-white h-screen pt-16 pb-8'>
         <div className="flex flex-col h-full overflow-y-auto">
-          {/* Sidebar content */}
           <div className="py-10 px-8 flex grow flex-col gap-y-5 bg-white overflow-y-auto px-6 pb-4">
             <div className="h-60 bg-gray-300 rounded-full flex justify-center items-center">
-              {/* Replace src with your image path */}
-              {session? (
-                    <Image
-                      src={session?.user?.image || ""}
-                      alt={session?.user?.name || ""}
-                      width={144}
-                      height={144}
-                      className="h-full w-full object-cover rounded-full"
-                    />
-                  ) : (
-                    <div className="mx-auto w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
-                    </div>
-                  )}
+              {session ? (
+                <Image
+                  src={githubImage || '/default-avatar.png'} // Provide a default image
+                  alt={githubName || 'User avatar'}
+                  width={144}
+                  height={144}
+                  className="h-full w-full object-cover rounded-full"
+                />
+              ) : (
+                <div className="mx-auto w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
+                </div>
+              )}
             </div>
-            {/* User Name */}
-            <h2 className="text-2xl font-bold text-gray-900">{session?.user?.name}</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{githubName || 'Anonymous'}</h2>
             <div className="">
-              <Link href={`https://github.com/${session?.user?.name}` || '#'}>
+              <Link href={`https://github.com/${githubName}` || '#'}>
                 <p className='flex items-center '>
-                <FaGithub className="text-black mx-2 text-lg" />
-                <span>Github</span>
+                  <FaGithub className="text-black mx-2 text-lg" />
+                  <span>Github</span>
                 </p>
               </Link>
-            
             </div>
-            {/* Stats and Categories */}
             <div>
               <div className="text-sm font-medium text-gray-500">Attestations: </div>
-              <div className="text-sm font-medium text-gray-500">Created  <span>ago</span></div>
+              <div className="text-sm font-medium text-gray-500">Created <span>ago</span></div>
             </div>
           </div>
         </div>

@@ -1,3 +1,5 @@
+
+
 'use client';
 import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
@@ -7,16 +9,28 @@ import { isMobile } from 'react-device-detect';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import FetchAndStoreUser from './FetchAndStoreUser';
+import useLocalStorage from '../../hooks/useLocalStorage'; // Import the useLocalStorage hook
 
 export default function Navbar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const { data: session, status } = useSession();
+  const [githubToken, setGithubToken] = useLocalStorage('githubToken', '');
+  const [ githubName, setGithubName ] = useLocalStorage('githubName', '');
+  const [ githubImage, setGithubImage ] = useLocalStorage('githubImage', '');
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  useEffect(() => {
+    if (status === 'authenticated' && session?.provider === 'github') {
+      setGithubToken(session.accessToken || '');
+      setGithubImage(session.user?.image || '');
+      setGithubName(session.user?.name || '');
+    }
+  }, [status, session, setGithubToken, setGithubImage, setGithubName]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -30,16 +44,21 @@ export default function Navbar() {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
+  const handleSignOut = () => {
+    signOut();
+    setGithubToken(''); // Clear the token from local storage
+  };
+
   if (!isClient) {
     return null;
   }
 
   return (
     <>
-    <FetchAndStoreUser />
+      <FetchAndStoreUser />
 
       <div className="flex justify-between items-center navbar bg-headerblack text-neutral-content p-3 md:p-8">
-        <Link href="/">
+      <Link href="/">
           <p
             className={`btn bg-headerblack text-xl border-none ${
               isMobile ? 'pl-2' : 'pl-10'
@@ -58,6 +77,7 @@ export default function Navbar() {
             </Link>
           )}
         </div>
+        
         <div className="flex items-center relative">
           {status === 'authenticated' ? (
             <div className="flex items-center space-x-2">
@@ -67,20 +87,20 @@ export default function Navbar() {
                 showBalance={false}
               />
               <Image
-                src={session?.user?.githubImage || session?.user?.image || ""}
-                alt={session?.user?.githubName || session?.user?.name || ""}
+                src={githubImage  || ""}
+                alt={githubName || ""}
                 width={40}
                 height={40}
                 className="rounded-full cursor-pointer"
                 onClick={toggleDropdown}
               />
               <p className="text-white cursor-pointer" onClick={toggleDropdown}>
-                {session?.user?.githubName || session?.user?.name || ""}
+                {githubName || ""}
               </p>
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
                   <button
-                    onClick={() => signOut()}
+                    onClick={handleSignOut}
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                   >
                     Sign out

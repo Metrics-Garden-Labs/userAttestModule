@@ -1,29 +1,29 @@
 import { NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
 import { NextRequest } from "next/server";
 
 export const GET = async (request: NextRequest) => {
   try {
-    const token = await getToken({ req: request });
+    const { searchParams } = new URL(request.url);
+    const token = searchParams.get("token");
+    const username = searchParams.get("username");
 
-    if (!token || !token.accessToken || !token.name) {
-      console.log("Not authenticated:", token);
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    if (!token || !username) {
+      console.log("Missing token or username");
+      return NextResponse.json(
+        { error: "Missing token or username" },
+        { status: 400 }
+      );
     }
-
-    const { accessToken, name: username } = token;
-    console.log("Access Token:", accessToken);
-    console.log("Username:", username);
 
     const [userReposResponse, eventsResponse] = await Promise.all([
       fetch("https://api.github.com/user/repos", {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${token}`,
         },
       }),
       fetch(`https://api.github.com/users/${username}/events/public`, {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${token}`,
         },
       }),
     ]);

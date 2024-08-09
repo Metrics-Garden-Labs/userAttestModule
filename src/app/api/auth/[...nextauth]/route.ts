@@ -3,6 +3,8 @@ import GoogleProvider from "next-auth/providers/google";
 import GitHubProvider from "next-auth/providers/github";
 import { JWT } from "next-auth/jwt";
 
+//store the tokens in local state.
+
 const handler = NextAuth({
   providers: [
     GoogleProvider({

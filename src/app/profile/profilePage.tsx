@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import Sidebar from './smSidebar';
 import { VerifyContent } from './verifyContent';
 import { Entry } from '../../lib/utils/types';
+import  useLocalStorage  from '../../hooks/useLocalStorage';
 
 interface Repository {
   id: number;
@@ -20,6 +21,8 @@ export default function ProfilePage() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [contributedRepositories, setContributedRepositories] = useState<Repository[]>([]);
   const { data: session } = useSession();
+  const [githubToken] = useLocalStorage<string>('githubToken', '');
+  const [githubName] = useLocalStorage<string>('githubName', '');
 
   const entry: Entry = {
     id: 1,  
@@ -67,9 +70,9 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const fetchRepositories = async () => {
-      if (session?.accessToken && activeTab === 'repos') {
+      if (githubToken && githubName && activeTab === 'repos'  ) {
         try {
-          const response = await fetch('/api/github-repos');
+          const response = await fetch(`/api/github-repos?token=${githubToken}&username=${githubName}`);
           if (!response.ok) {
             throw new Error('Failed to fetch repositories');
           }
@@ -83,7 +86,8 @@ export default function ProfilePage() {
     };
 
     fetchRepositories();
-  }, [activeTab, session]);
+  }, [activeTab]);
+
 
   const renderContent = () => {
     switch (activeTab) {
