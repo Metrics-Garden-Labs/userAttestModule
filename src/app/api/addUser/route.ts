@@ -67,7 +67,7 @@ export const POST = async (request: Request) => {
       username: githubUser.login,
       name: githubUser.name || "",
       email: email || githubUser.email || "",
-      avatarUrl: image || githubUser.avatar_url || "",
+      image: image || githubUser.avatar_url || "",
       bio: githubUser.bio || "",
       company: githubUser.company || "",
       twitter: githubUser.twitter_username || "",

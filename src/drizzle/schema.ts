@@ -18,7 +18,7 @@ export const users = pgTable(
     username: text("username").notNull(), // GitHub login
     name: text("name"), // Full name (can be null)
     email: text("email").notNull(),
-    avatarUrl: text("avatarUrl"),
+    image: text("image"),
     bio: text("bio"),
     company: text("company"),
     twitter: text("twitter"),

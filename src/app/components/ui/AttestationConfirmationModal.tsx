@@ -10,7 +10,7 @@ const AttestationConfirmationModal: React.FC<AttestationConfirmationModalProps> 
   attestationUID,
   onClose,
 }) => {
-  const attestationLink = `https://optimism.easscan.org/attestation/view/${attestationUID}`;
+  const attestationLink = `https://optimism-sepolia.easscan.org/attestation/view/${attestationUID}`;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">

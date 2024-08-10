@@ -15,11 +15,11 @@ export interface Users {
   username: string;
   name: string | null;
   email: string;
-  avatarUrl: string;
+  image: string | null;
   bio: string | null;
   url: string | null;
   company: string | null;
   twitter: string | null;
-  orgs: string | null;
+  orgs: unknown;
   createdAt: Date;
 }

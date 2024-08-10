@@ -23,6 +23,7 @@ import {
     blast,
     linea,
     sepolia,
+    optimismSepolia
     
 } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -46,6 +47,7 @@ const config = getDefaultConfig({
         mainnet,
         polygon,
         optimism,
+        optimismSepolia,
         arbitrum,
         base,
         scroll,

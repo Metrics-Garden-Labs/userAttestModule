@@ -10,9 +10,9 @@ function UserCard({ user }: UserCardProps) {
   return (
     <div className="flex flex-col p-6 border justify-center items-center bg-white text-black border-gray-300 rounded-2xl w-full h-60 shadow-lg cursor-pointer hover:shadow-xl transition-shadow duration-300">
       <div className="w-32 h-32 rounded-full overflow-hidden mb-4 relative">
-        {user.avatarUrl ? (
+        {user.image ? (
           <Image 
-            src={user.avatarUrl} 
+            src={user.image} 
             alt={`${user.name}'s profile picture`}
             layout="fill"
             objectFit="cover"
@@ -20,7 +20,7 @@ function UserCard({ user }: UserCardProps) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500">
-            No Avatar
+            No image
           </div>
         )}
       </div>

@@ -14,6 +14,7 @@ import { Users } from '../../../src/lib/utils/types';
 import { getUsers } from '../../drizzle/db';
 import { Metadata } from "next";
 
+
 interface Props {
   searchParams?: {
     query?: string;

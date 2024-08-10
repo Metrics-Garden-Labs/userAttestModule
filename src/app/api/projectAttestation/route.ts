@@ -64,12 +64,12 @@ export async function POST(request: NextRequest) {
 
     const settings = {
       apiKey: alchemyApiKey,
-      network: Network.OPT_MAINNET,
+      network: Network.OPT_SEPOLIA,
     };
 
     // const alchemy = new Alchemy(settings);
     // console.log("Alchemy:", alchemy);
-    const network = new ethers.Network("optimism", 10);
+    const network = new ethers.Network("optimism-sepolia", 11155420);
     const alchemyProvider = new ethers.AlchemyProvider(
       network,
       settings.apiKey

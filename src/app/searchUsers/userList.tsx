@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import UserCard from '../components/ui/UserCard';
 import UserModal from '../components/ui/UserModal';
 import { Users } from '../../lib/utils/types';
+import { useSwitchChain } from 'wagmi';
+
 
 interface UserListProps {
   users: Users[];
@@ -14,6 +16,12 @@ interface UserListProps {
 
 export default function UserList({ users, query, filter, verificationFilter }: UserListProps) {
   const [selectedUser, setSelectedUser] = useState<Users | null>(null);
+  const { switchChain } = useSwitchChain();
+
+  useEffect(() => {
+    switchChain({ chainId: 11155420});
+    console.log("Switched to chain 11155420");
+   }, []);
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {

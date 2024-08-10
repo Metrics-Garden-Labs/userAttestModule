@@ -16,13 +16,15 @@ interface UserModalProps {
 
 export default function UserModal({ user, onClose }: UserModalProps) {
   const [isReviewMode, setIsReviewMode] = useState(false);
-  const [loading , setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [currentAttestationUID, setCurrentAttestationUID] = useState<string | null>(null);
   const [endorsements, setEndorsements] = useState({
     ethereumCore: false,
     opStackResearch: false,
     opStackTooling: false,
   });
-  const { createReviewAttestation, attestationUID } = useCreateReviewAttestation();
+  const { createReviewAttestation } = useCreateReviewAttestation();
 
   const toggleEndorsement = (key: keyof typeof endorsements) => {
     setEndorsements(prev => ({ ...prev, [key]: !prev[key] }));
@@ -37,23 +39,31 @@ export default function UserModal({ user, onClose }: UserModalProps) {
     console.log('Endorsements:', endorsements);
     setLoading(true);
     const uid = await createReviewAttestation(user.username, endorsements);
+    setLoading(false);
     if (uid) {
       console.log('Attestation created with UID:', uid);
-      setLoading(false);
-      onClose();
+      setCurrentAttestationUID(uid);
+      setShowConfirmation(true);
     } else {
       console.error('Failed to create attestation');
+      // Optionally, show an error message to the user
     }
+  };
+
+  const handleCloseConfirmation = () => {
+    setShowConfirmation(false);
+    setCurrentAttestationUID(null);
+    onClose(); // Close the entire modal after confirmation
   };
 
   const renderModal = () => {
     if (loading) {
       return <AttestationCreationModal />;
-    } else if (attestationUID) {
+    } else if (showConfirmation && currentAttestationUID) {
       return (
         <AttestationConfirmationModal
-          attestationUID={attestationUID}
-          onClose={onClose}
+          attestationUID={currentAttestationUID}
+          onClose={handleCloseConfirmation}
         />
       );
     }
@@ -63,9 +73,9 @@ export default function UserModal({ user, onClose }: UserModalProps) {
   const renderInfoScreen = () => (
     <div className="flex flex-col items-center text-center">
       <div className="w-32 h-32 rounded-full overflow-hidden mb-4 relative">
-        {user.avatarUrl ? (
+        {user.image ? (
           <Image 
-            src={user.avatarUrl} 
+            src={user.image} 
             alt={`${user.name}'s profile picture`}
             layout="fill"
             objectFit="cover"
@@ -123,10 +133,11 @@ export default function UserModal({ user, onClose }: UserModalProps) {
         ))}
       </div>
       <button 
-        onClick={handleSubmitEndorsements}  // Changed this line
+        onClick={handleSubmitEndorsements}
         className='btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg'
+        disabled={loading}
       >
-        Submit Endorsements
+        {loading ? 'Submitting...' : 'Submit Endorsements'}
       </button>
     </div>
   );

@@ -2,10 +2,14 @@ import { useState } from 'react';
 import { SchemaEncoder, EAS, NO_EXPIRATION, ZERO_BYTES32, AttestationRequestData } from '@ethereum-attestation-service/eas-sdk';
 import { useSigner } from './useEAS';
 import { NEXT_PUBLIC_URL } from '../config/config';
+import useLocalStorage from './useLocalStorage';
 
 export const useCreateReviewAttestation = () => {
   const [attestationUID, setAttestationUID] = useState<string>('');
   const signer = useSigner();
+  const [githubName] = useLocalStorage<string>('githubName', '');
+
+
 
   const createReviewAttestation = async (username: string, endorsements: {
     ethereumCore: boolean,
@@ -18,12 +22,13 @@ export const useCreateReviewAttestation = () => {
     }
     console.log('Creating attestation for:', username, endorsements);
 
-    const schema = '0x47715e5c9d3abf72b69b62d02eae433d4cc3180ea982f1af7332fb83352dddde';
+    const schema = '0x4317a4591cbcb785778e6d77b3cb7d5baa789ed5481d4bb4eeaf94a785556f7c';
     const schemaEncoder = new SchemaEncoder(
-      'string GitHubusername, bool endorsedECC, bool endorsedOPRD, bool endorsedOPTooling'
+      'string githubuserfrom, string githubuserto, bool endorsedECC, bool endorsedOPRD, bool endorsedOPTooling'
     )
     const encodedData = schemaEncoder.encodeData([
-      { name: 'GitHubusername', value: username, type: 'string' },
+      { name: 'githubuserfrom', value: githubName, type: 'string' },
+      { name: 'githubuserto', value: username, type: 'string' },
       { name: 'endorsedECC', value: endorsements.ethereumCore, type: 'bool' },
       { name: 'endorsedOPRD', value: endorsements.opStackResearch, type: 'bool' },
       { name: 'endorsedOPTooling', value: endorsements.opStackTooling, type: 'bool' },
