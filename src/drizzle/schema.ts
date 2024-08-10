@@ -41,7 +41,7 @@ export const users = pgTable(
 
 export const userendorsements = pgTable("userendorsements", {
   id: serial("id").primaryKey(),
-  userId: integer("userId")
+  recipientId: integer("userId")
     .notNull()
     .references(() => users.id),
   recipientname: text("username").notNull(),

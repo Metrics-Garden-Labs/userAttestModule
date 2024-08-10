@@ -6,8 +6,11 @@ import { IoIosArrowBack, IoIosMenu } from 'react-icons/io';
 import { useSession } from 'next-auth/react';
 import Sidebar from './smSidebar';
 import { VerifyContent } from './verifyContent';
-import { Entry } from '../../lib/utils/types';
+import { Entry, UserEndorsements } from '../../lib/utils/types';
 import  useLocalStorage  from '../../hooks/useLocalStorage';
+import Image from 'next/image';
+import { NEXT_PUBLIC_URL } from '@/config/config';
+import { format } from 'date-fns';
 
 interface Repository {
   id: number;
@@ -23,7 +26,35 @@ export default function ProfilePage() {
   const { data: session } = useSession();
   const [githubToken] = useLocalStorage<string>('githubToken', '');
   const [githubName] = useLocalStorage<string>('githubName', '');
+  const [endorsements, setEndorsements] = useState<UserEndorsements[]>([]);
+  const [endorsementsLoading, setEndorsementsLoading] = useState(true);
 
+  useEffect(() => {
+    const fetchRepositories = async () => {
+      if (githubToken && githubName && activeTab === 'repos'  ) {
+        try {
+          const response = await fetch(`/api/github-repos?token=${githubToken}&username=${githubName}`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch repositories');
+          }
+          const { userRepos, contributedRepos } = await response.json();
+          setRepositories(userRepos);
+          setContributedRepositories(contributedRepos);
+        } catch (error) {
+          console.error('Error fetching repositories:', error);
+        }
+      }
+    };
+
+    fetchRepositories();
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'insights') {
+      fetchEndorsements();
+    }
+  }, [activeTab, githubName]);
+  
   const entry: Entry = {
     id: 1,  
     slug: "zk-email/proof-of-github",
@@ -68,25 +99,50 @@ export default function ProfilePage() {
     setSidebarOpen(!sidebarOpen);
   };
 
-  useEffect(() => {
-    const fetchRepositories = async () => {
-      if (githubToken && githubName && activeTab === 'repos'  ) {
-        try {
-          const response = await fetch(`/api/github-repos?token=${githubToken}&username=${githubName}`);
-          if (!response.ok) {
-            throw new Error('Failed to fetch repositories');
-          }
-          const { userRepos, contributedRepos } = await response.json();
-          setRepositories(userRepos);
-          setContributedRepositories(contributedRepos);
-        } catch (error) {
-          console.error('Error fetching repositories:', error);
-        }
-      }
-    };
+  
+  const fetchEndorsements = async () => {
+    try {
+      console.log('Fetching endorsements for:', githubName);
+      const response = await fetch(`${NEXT_PUBLIC_URL}/api/getEndorsementsByUser`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ githubName }),
+      });
 
-    fetchRepositories();
-  }, [activeTab]);
+      const responseData = await response.json();
+      console.log('Fetched endorsement data:', responseData);
+
+      if (responseData && responseData.endorsements) {
+        setEndorsements(responseData.endorsements);
+      }
+    } catch (error) {
+      console.error('Error fetching endorsements:', error);
+    } finally {
+      setEndorsementsLoading(false);
+    }
+  };
+  
+  const renderEndorsementContent = (endorsement: UserEndorsements) => {
+    return (
+      <>
+        <p className='text-md text-black mb-2'>{endorsement.endorserName} endorsed {endorsement.recipientname} for:</p>
+        {endorsement.ecc && (
+          <p className='text-sm text-gray-500 mb-2'>• Ethereum Core Contributions</p>
+        )}
+        {endorsement.oprd && (
+          <p className='text-sm text-gray-500 mb-2'>• OP Stack Research & Development</p>
+        )}
+        {endorsement.optooling && (
+          <p className='text-sm text-gray-500 mb-2'>• OP Stack Tooling</p>
+        )}
+        {!endorsement.ecc && !endorsement.oprd && !endorsement.optooling && (
+          <p className='text-sm text-gray-500 mb-2'>No specific endorsements</p>
+        )}
+      </>
+    );
+  };
 
 
   const renderContent = () => {
@@ -140,37 +196,50 @@ export default function ProfilePage() {
             </div>
           </div>
         );
-      case 'contributions':
-        return (
-          <div className="px-3 bg-backgroundgray">
-            <div className="mb-4 flex justify-between items-center flex-col sm:flex-row">
-              <div className="relative w-full sm:w-1/2 mb-2 sm:mb-0">
-                <input
-                  type="text"
-                  placeholder="Search for a contribution..."
-                  className="px-4 py-2 border border-gray-300 rounded-md w-full text-sm"
-                />
-                <span className="absolute right-3 top-3 text-black">
-                  <FaSearch />
-                </span>
-              </div>
-            </div>
-            <div className="mb-4"></div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 mx-3 lg:gap-8 max-w-6xl overflow-y-auto">
-              {/* Contribution cards go here */}
-            </div>
-          </div>
-        );
       case 'insights':
-        return (
-          <div className="text-black text-left">
-            <h3 className="font-semibold mb-4">Insights</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 mx-3 lg:gap-8 max-w-6xl overflow-y-auto">
-              {/* Insights cards go here */}
-              <h1>Insights</h1>
+          return (
+            <div className="text-black text-left">
+              <h3 className="font-semibold mb-4">Insights</h3>
+              {endorsementsLoading ? (
+                <p>Loading...</p>
+              ) : endorsements.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 mx-3 lg:gap-8 max-w-6xl overflow-y-auto">
+                  {endorsements.map((endorsement, index) => (
+                    <div
+                      key={index}
+                      className="p-4 bg-white border rounded-lg shadow-md"
+                    >
+                      <div className="flex items-start mb-2">
+                        {endorsement.endorserAvatar && (
+                          <Image
+                            src={endorsement.endorserAvatar}
+                            alt={endorsement.endorserName || ''}
+                            width={40}
+                            height={40}
+                            className="mr-2 rounded-full"
+                          />
+                        )}
+                        <div>
+                          <h3 className="text-lg font-semibold">
+                            {endorsement.endorserName}
+                          </h3>
+                          {renderEndorsementContent(endorsement)}
+                          <p className="text-sm text-gray-500">
+                            {format(
+                              new Date(endorsement.createdAt || ''),
+                              'MMMM dd, yyyy'
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p>No endorsements yet.</p>
+              )}
             </div>
-          </div>
-        );
+          );
       case 'verify':
         return (
         <div className="text-black text-left">
@@ -199,9 +268,6 @@ export default function ProfilePage() {
 
           <button onClick={() => setActiveTab('repos')} className={tabClasses('repos')}>
             Repositories
-          </button>
-          <button onClick={() => setActiveTab('contributions')} className={tabClasses('contributions')}>
-            Contributions
           </button>
           <button onClick={() => setActiveTab('insights')} className={tabClasses('insights')}>
             Insights

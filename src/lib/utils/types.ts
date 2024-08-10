@@ -26,13 +26,15 @@ export interface Users {
 
 export interface UserEndorsements {
   id: number;
-  userId: number;
+  recipientId: number;
   recipientname: string;
   endorserId: number;
+  endorserName: string;
+  endorserAvatar: string | null;
   endorsername: string;
-  ecc: boolean;
-  oprd: boolean;
-  optooling: boolean;
+  ecc: boolean | null;
+  oprd: boolean | null;
+  optooling: boolean | null;
   attestationuid: string;
   createdAt: Date;
 }

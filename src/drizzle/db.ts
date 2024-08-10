@@ -3,8 +3,9 @@ import { drizzle } from "drizzle-orm/vercel-postgres";
 import { sql } from "@vercel/postgres";
 import * as schema from "./schema";
 import { users, userendorsements } from "./schema";
+import { eq, desc } from "drizzle-orm";
 
-import { Users } from "@/lib/utils/types";
+import { UserEndorsements, Users } from "@/lib/utils/types";
 
 export const db = drizzle(sql, { schema });
 
@@ -34,4 +35,33 @@ export const insertEndorsement = async (
     .returning();
   console.log("Insert result:", result);
   return result[0];
+};
+
+export const getEndorsementsByUsername = async (username: string) => {
+  try {
+    const endorsementsList = await db
+      .select({
+        id: userendorsements.id,
+        recipientId: userendorsements.recipientId,
+        recipientname: userendorsements.recipientname,
+        endorserId: userendorsements.endorserId,
+        endorserName: users.username,
+        endorserAvatar: users.image,
+        endorsername: userendorsements.endorsername,
+        ecc: userendorsements.ecc,
+        oprd: userendorsements.oprd,
+        optooling: userendorsements.optooling,
+        attestationuid: userendorsements.attestationuid,
+        createdAt: userendorsements.createdAt,
+      })
+      .from(userendorsements)
+      .innerJoin(users, eq(userendorsements.endorserId, users.id))
+      .where(eq(userendorsements.recipientname, username))
+      .orderBy(desc(userendorsements.createdAt));
+
+    return endorsementsList;
+  } catch (error) {
+    console.error("Error fetching endorsements:", error);
+    throw error;
+  }
 };

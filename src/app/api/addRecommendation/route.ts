@@ -25,7 +25,7 @@ export const POST = async (request: NextRequest) => {
     }
 
     const newEndorsement = {
-      userId: recipient[0].id,
+      recipientId: recipient[0].id,
       recipientname: recipientName,
       endorserId: endorser[0].id,
       endorsername: endorserName,
