@@ -7,25 +7,41 @@ import {
   varchar,
   timestamp,
   uniqueIndex,
+  json,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable(
   "users",
   {
-    id: serial("id").primaryKey(), // Primary key
-    githubId: text("githubId").notNull(), // GitHub user ID
-    name: text("username").notNull(), // GitHub username
-    email: text("email").notNull(), // User email
-    avatarUrl: text("avatarUrl").notNull(), // URL to the GitHub profile picture
-    bio: text("bio"), // GitHub profile bio
-    url: text("url"), // URL to the GitHub profile
-    createdAt: timestamp("createdAt").defaultNow().notNull(), // Creation timestamp
+    id: serial("id").primaryKey(),
+    githubId: text("githubId").notNull(),
+    username: text("username").notNull(), // GitHub login
+    name: text("name"), // Full name (can be null)
+    email: text("email").notNull(),
+    avatarUrl: text("avatarUrl"),
+    bio: text("bio"),
+    company: text("company"),
+    twitter: text("twitter"),
+    url: text("url"), // GitHub profile URL
+    orgs: json("orgs"), // Store organizations as JSON
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").$onUpdateFn(() => new Date()),
   },
   (users) => {
     return {
-      uniqueEmailIdx: uniqueIndex("unique_email_idx").on(users.email), // Unique index on email
-      uniqueGithubIdIdx: uniqueIndex("unique_github_id_idx").on(users.githubId), // Unique index on GitHub ID
+      uniqueEmailIdx: uniqueIndex("unique_email_idx").on(users.email),
+      uniqueGithubIdIdx: uniqueIndex("unique_github_id_idx").on(users.githubId),
+      uniqueUsernameIdx: uniqueIndex("unique_username_idx").on(users.username),
     };
   }
 );
+
+// Initialize Drizzle with the Vercel Postgres SQL instance
+export const db = drizzle(sql);
+
+// Helper function to insert a user
+export const insertUser = async (
+  userData: Omit<typeof users.$inferInsert, "id" | "createdAt" | "updatedAt">
+) => {
+  return db.insert(users).values(userData).returning();
+};

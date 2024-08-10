@@ -2,17 +2,9 @@ import React, { useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import UserCard from '../components/ui/UserCard';
+import { Users } from '../../lib/utils/types';
 
-export interface Users {
-  id: number;
-  githubId: string;
-  name: string;
-  email: string;
-  avatarUrl: string;
-  bio: string | null;
-  url: string | null;
-  createdAt: Date;
-}
+
 
 interface UserListProps {
   users: Users[];
@@ -24,7 +16,7 @@ interface UserListProps {
 export default function UserList({ users, query, filter, verificationFilter }: UserListProps) {
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
-      const matchesQuery = user.name.toLowerCase().includes(query.toLowerCase());
+      const matchesQuery = user.username.toLowerCase().includes(query.toLowerCase());
       // Note: Adjust this filtering logic based on your actual verification criteria
       const matchesVerification = verificationFilter === '';
       return matchesQuery && matchesVerification;

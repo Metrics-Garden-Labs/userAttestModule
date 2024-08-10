@@ -13,22 +13,10 @@ export const getUsers = async () => {
 };
 
 export const insertUser = async (
-  user: Omit<Users, "id" | "createdAt">
-): Promise<void> => {
-  try {
-    await db
-      .insert(users)
-      .values({
-        githubId: user.githubId,
-        name: user.name,
-        email: user.email,
-        avatarUrl: user.avatarUrl,
-        bio: user.bio,
-        url: user.url,
-      })
-      .onConflictDoNothing(); // Avoid duplicates based on your unique constraints
-  } catch (error) {
-    console.error("Error inserting user:", error);
-    throw new Error("Failed to insert user");
-  }
+  userData: Omit<typeof users.$inferInsert, "id" | "createdAt" | "updatedAt">
+) => {
+  console.log("Inserting user data:", userData);
+  const result = await db.insert(users).values(userData).returning();
+  console.log("Insert result:", result);
+  return result[0];
 };
