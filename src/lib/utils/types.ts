@@ -23,3 +23,16 @@ export interface Users {
   orgs: unknown;
   createdAt: Date;
 }
+
+export interface UserEndorsements {
+  id: number;
+  userId: number;
+  recipientname: string;
+  endorserId: number;
+  endorsername: string;
+  ecc: boolean;
+  oprd: boolean;
+  optooling: boolean;
+  attestationuid: string;
+  createdAt: Date;
+}

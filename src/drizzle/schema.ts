@@ -8,6 +8,8 @@ import {
   timestamp,
   uniqueIndex,
   json,
+  boolean,
+  integer,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable(
@@ -24,6 +26,7 @@ export const users = pgTable(
     twitter: text("twitter"),
     url: text("url"), // GitHub profile URL
     orgs: json("orgs"), // Store organizations as JSON
+    verified: boolean("verified").default(false),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").$onUpdateFn(() => new Date()),
   },
@@ -36,12 +39,22 @@ export const users = pgTable(
   }
 );
 
-// Initialize Drizzle with the Vercel Postgres SQL instance
-export const db = drizzle(sql);
+export const userendorsements = pgTable("userendorsements", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId")
+    .notNull()
+    .references(() => users.id),
+  recipientname: text("username").notNull(),
+  endorserId: integer("endorserId")
+    .notNull()
+    .references(() => users.id),
+  endorsername: text("endorsername").notNull(),
+  ecc: boolean("ecc").default(false),
+  oprd: boolean("oprd").default(false),
+  optooling: boolean("optooling").default(false),
+  attestationuid: text("attestationuid").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
 
-// Helper function to insert a user
-export const insertUser = async (
-  userData: Omit<typeof users.$inferInsert, "id" | "createdAt" | "updatedAt">
-) => {
-  return db.insert(users).values(userData).returning();
-};
+// Initialize the database
+export const db = drizzle(sql);

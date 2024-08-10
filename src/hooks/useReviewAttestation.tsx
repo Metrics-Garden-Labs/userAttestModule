@@ -9,8 +9,6 @@ export const useCreateReviewAttestation = () => {
   const signer = useSigner();
   const [githubName] = useLocalStorage<string>('githubName', '');
 
-
-
   const createReviewAttestation = async (username: string, endorsements: {
     ethereumCore: boolean,
     opStackResearch: boolean,
@@ -71,6 +69,10 @@ export const useCreateReviewAttestation = () => {
       if (responseData.success) {
         const newAttestationUID = responseData.attestationUID;
         setAttestationUID(newAttestationUID);
+        
+        // Add the recommendation to the database
+        await addRecommendationToDatabase(githubName, username, endorsements, newAttestationUID);
+        
         return newAttestationUID;
       } else {
         throw new Error(`Failed to create attestation, Error: ${responseData.error}`);
@@ -78,6 +80,41 @@ export const useCreateReviewAttestation = () => {
     } catch (error) {
       console.error('Error creating attestation:', error);
       return null;
+    }
+  };
+
+  const addRecommendationToDatabase = async (
+    endorserName: string,
+    recipientName: string,
+    endorsements: {
+      ethereumCore: boolean,
+      opStackResearch: boolean,
+      opStackTooling: boolean
+    },
+    attestationUID: string
+  ) => {
+    try {
+      const response = await fetch(`${NEXT_PUBLIC_URL}/api/addRecommendation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          endorserName,
+          recipientName,
+          endorsements,
+          attestationUID,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add recommendation to database');
+      }
+
+      const data = await response.json();
+      console.log('Recommendation added to database:', data);
+    } catch (error) {
+      console.error('Error adding recommendation to database:', error);
     }
   };
 
