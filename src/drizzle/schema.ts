@@ -33,8 +33,6 @@ export const users = pgTable(
   },
   (users) => {
     return {
-      uniqueEmailIdx: uniqueIndex("unique_email_idx").on(users.email),
-      uniqueGithubIdIdx: uniqueIndex("unique_github_id_idx").on(users.githubId),
       uniqueUsernameIdx: uniqueIndex("unique_username_idx").on(users.username),
     };
   }
