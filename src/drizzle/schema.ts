@@ -27,6 +27,7 @@ export const users = pgTable(
     url: text("url"), // GitHub profile URL
     orgs: json("orgs"), // Store organizations as JSON
     verified: boolean("verified").default(false),
+    verifieduid: text("verifieduid"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").$onUpdateFn(() => new Date()),
   },

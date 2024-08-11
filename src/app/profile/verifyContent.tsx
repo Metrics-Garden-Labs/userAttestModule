@@ -14,6 +14,8 @@ import { ProofStatus } from '@/lib/utils/ZkRegex';
 import { useSwitchChain } from 'wagmi';
 import InputDataDisplay from '../components/ui/EmailDataDisplay';
 import FileUploadInput from '../components/ui/UploadFile';
+import { useCreatGithubAttestation } from '@/hooks/useVerifiyGithub';
+import useLocalStorage from '@/hooks/useLocalStorage';
 
 
 export interface ContentProps {
@@ -51,6 +53,8 @@ export function VerifyContent(props: ContentProps) {
   const [messages, setMessages] = useState<Email[]>([]);
   const [signalLength, setSignalLength] = useState<number>(1);
   const [emailUploaded, setEmailUploaded] = useState(false);
+  const [isAttesting, setIsAttesting] = useState(false);
+  const { createGithubAttestation, attestationUID } = useCreatGithubAttestation();
   const { switchChain } = useSwitchChain();
 
   const [activeJob, setActiveJob] = useState(null);
@@ -118,6 +122,29 @@ export function VerifyContent(props: ContentProps) {
   const { isLoading: isConfirming, isSuccess: isConfirmed, isError, error: txError } =
     useWaitForTransactionReceipt({ hash });
 
+
+    const handleAttestation = async () => {
+      if (!hash) {
+        alert("Please verify your proof on-chain first.");
+        return;
+      }
+  
+      setIsAttesting(true);
+      try {
+        const newAttestationUID = await createGithubAttestation(hash);
+        if (newAttestationUID) {
+          alert("GitHub ownership attested successfully!");
+        } else {
+          throw new Error('Failed to create attestation');
+        }
+      } catch (error) {
+        console.error('Error attesting ownership:', error);
+        alert("Failed to attest ownership. Please try again.");
+      } finally {
+        setIsAttesting(false);
+      }
+    };
+  
   async function startProofGeneration() {
     console.log("Starting proof generation");
     setIsGeneratingProof(true);
@@ -174,7 +201,7 @@ export function VerifyContent(props: ContentProps) {
     };
   }
 
-  function displayGoogleLoginButton() {
+  function DisplayGoogleLoginButton() {
     const { data: session, status } = useSession();
     
     const isGoogleAuthed = !!session?.user?.googleEmail;
@@ -486,7 +513,7 @@ export function VerifyContent(props: ContentProps) {
               <li>Nothing touches our servers, everything is client side!</li>
             </ul>
             <div className="flex items-center space-x-4 mt-4">
-              {displayGoogleLoginButton()}
+              {DisplayGoogleLoginButton()}
               <FileUploadInput onUpload={(e) => uploadEmail(e)} />
             </div>
             {session?.user?.googleEmail && <p className="mt-2">Logged in as: <b>{session.user.googleEmail}</b></p>}
@@ -535,11 +562,11 @@ export function VerifyContent(props: ContentProps) {
             </h4>
             <p className="mb-4">Once you have verified your proofs on-chain, you can attest to your ownership of the Github account.</p>
             <button 
-              className="btn bg-blue-500 hover:bg-blue-600 text-white"
-              onClick={() => alert("Attested!")}
-            >
-              Attest Ownership
-            </button>
+          className="btn bg-blue-500 hover:bg-blue-600 text-white"
+          onClick={handleAttestation}
+        >
+           Attest Ownership
+        </button>
             <p className="mt-2">Here is a link to your attestation!</p>
           </section>
         </div>

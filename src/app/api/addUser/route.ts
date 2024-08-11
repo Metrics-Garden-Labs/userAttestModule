@@ -80,6 +80,8 @@ export const POST = async (request: Request) => {
         }))
       ),
       url: githubUser.html_url || "",
+      verified: false,
+      verifieduid: "",
     };
 
     console.log("Sanitized user data:", newUser);

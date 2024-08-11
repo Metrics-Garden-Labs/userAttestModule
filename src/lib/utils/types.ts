@@ -21,6 +21,8 @@ export interface Users {
   company: string | null;
   twitter: string | null;
   orgs: unknown;
+  verified: boolean | null;
+  verifieduid: string | null;
   createdAt: Date;
 }
 

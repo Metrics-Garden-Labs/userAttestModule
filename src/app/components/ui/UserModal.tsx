@@ -115,8 +115,8 @@ export default function UserModal({ user, onClose }: UserModalProps) {
 
   const renderReviewScreen = () => (
     <div className="flex flex-col items-center text-center">
-      <h2 className="text-2xl font-bold mb-4">Endorse {user.name}'s Knowledge</h2>
-      <p className="mb-6">For which of these topics would you endorse this user's knowledge? Select all that apply:</p>
+      <h2 className="text-2xl font-bold mb-4">Endorse {user.name}’s Knowledge</h2>
+      <p className="mb-6">For which of these topics would you endorse this user’s knowledge? Select all that apply:</p>
       <div className="flex flex-wrap justify-center gap-4 mb-6">
         {Object.entries(endorsements).map(([key, value]) => (
           <button
