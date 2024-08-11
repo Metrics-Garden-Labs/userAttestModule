@@ -156,9 +156,14 @@ export default function ProfilePage() {
   };
   
   const renderEndorsementContent = (endorsement: UserEndorsements) => {
+    const message =
+      endorsementType === 'received'
+        ? `${endorsement.endorserName} endorsed ${endorsement.recipientname} for:`
+        : `You endorsed ${endorsement.recipientname} for:`;
+
     return (
       <>
-        <p className='text-md text-black mb-2'>{endorsement.endorserName} endorsed {endorsement.recipientname} for:</p>
+        <p className='text-md text-black mb-2'>{message}</p>
         {endorsement.ecc && (
           <p className='text-sm text-gray-500 mb-2'>• Ethereum Core Contributions</p>
         )}
