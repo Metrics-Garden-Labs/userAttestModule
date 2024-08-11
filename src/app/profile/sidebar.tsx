@@ -25,7 +25,7 @@ const Sidebar = () => {
     const fetchUserData = async () => {
       if (githubName) {
         try {
-          const response = await fetch('/api/getUserData', {
+          const response = await fetch('/api/getEndorsementCount', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
