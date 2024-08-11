@@ -37,7 +37,7 @@ export const useCreateReviewAttestation = () => {
     console.log('recipient', await signer.getAddress());
 
     const attestationdata: AttestationRequestData = {
-      recipient: "",
+      recipient: await signer.getAddress(),
       expirationTime: NO_EXPIRATION,
       revocable: true,
       refUID: ZERO_BYTES32,
