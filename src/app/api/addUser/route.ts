@@ -40,9 +40,51 @@ export const POST = async (request: Request) => {
       console.log(
         "User with GitHub ID",
         githubUser.id,
-        "already exists in the database. Skipping insertion."
+        "already exists in the database."
       );
-      return NextResponse.json({ message: "User already exists" });
+
+      // Prepare fields to update if they are missing or empty
+      const updatedFields: Partial<Users> = {};
+
+      if (!existingUser.email && email) {
+        updatedFields.email = email;
+      }
+
+      if (!existingUser.name && name) {
+        updatedFields.name = name;
+      }
+
+      if (!existingUser.bio && githubUser.bio) {
+        updatedFields.bio = githubUser.bio;
+      }
+
+      if (!existingUser.company && githubUser.company) {
+        updatedFields.company = githubUser.company;
+      }
+
+      if (!existingUser.twitter && githubUser.twitter_username) {
+        updatedFields.twitter = githubUser.twitter_username;
+      }
+
+      if (!existingUser.image && image) {
+        updatedFields.image = image;
+      }
+
+      // Only proceed with the update if there are fields to update
+      if (Object.keys(updatedFields).length > 0) {
+        await db
+          .update(users)
+          .set(updatedFields)
+          .where(eq(users.githubId, githubUser.id.toString()))
+          .execute();
+
+        console.log("User updated with new data:", updatedFields);
+        return NextResponse.json({ message: "User updated successfully" });
+      }
+
+      return NextResponse.json({
+        message: "User already exists with complete data",
+      });
     }
 
     // Fetch user's organizations from GitHub
@@ -66,7 +108,7 @@ export const POST = async (request: Request) => {
     const newUser: Omit<Users, "id" | "createdAt" | "updatedAt"> = {
       githubId: githubUser.id.toString(),
       username: githubUser.login,
-      name: githubUser.name || "",
+      name: name || githubUser.name || "",
       email: email || githubUser.email || "",
       image: image || githubUser.avatar_url || "",
       bio: githubUser.bio || "",
