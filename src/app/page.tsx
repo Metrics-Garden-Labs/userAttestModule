@@ -10,7 +10,7 @@ const Home: React.FC = () => {
         <h2 className="text-2xl text-gray-600 mt-2">of Metrics Garden Labs</h2>
       </header>
       <p className="text-lg text-gray-700 max-w-md leading-relaxed">
-        Welcome to Metrics Garden Labs. We're working on something amazing! Stay tuned for more updates.
+        Welcome to Metrics Garden Labs. We’re working on something amazing! Stay tuned for more updates.
       </p>
     </div>
   );
