@@ -1,3 +1,5 @@
+//displays a list of users based on the search query and filters
+
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -5,7 +7,6 @@ import UserCard from '../components/ui/UserCard';
 import UserModal from '../components/ui/UserModal';
 import { Users } from '../../lib/utils/types';
 import { useSwitchChain } from 'wagmi';
-
 
 interface UserListProps {
   users: Users[];
