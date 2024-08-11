@@ -114,7 +114,8 @@ export default function ProfilePage() {
   const fetchEndorsements = async () => {
     try {
       console.log('Fetching endorsements for:', githubName);
-      const endpoint = endorsementType === 'received' ? 'getEndorsementForUser' : 'getEndorsementByUser';
+      const endpoint = endorsementType === 'received' ? 'getEndorsementsForUser' : 'getEndorsementsByUser';
+      console.log("endpoint", endpoint)
       const response = await fetch(`${NEXT_PUBLIC_URL}/api/${endpoint}`, {
         method: 'POST',
         headers: {
