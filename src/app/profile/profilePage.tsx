@@ -26,7 +26,8 @@ export default function ProfilePage() {
   const { data: session } = useSession();
   const [githubToken] = useLocalStorage<string>('githubToken', '');
   const [githubName] = useLocalStorage<string>('githubName', '');
-  const [endorsements, setEndorsements] = useState<UserEndorsements[]>([]);
+  const [receivedEndorsements, setReceivedEndorsements] = useState<UserEndorsements[]>([]);
+  const [givenEndorsements, setGivenEndorsements] = useState<UserEndorsements[]>([]);
   const [endorsementsLoading, setEndorsementsLoading] = useState(true);
   const [endorsementType, setEndorsementType] = useState<'given' | 'received'>('received');
 
@@ -113,10 +114,11 @@ export default function ProfilePage() {
   
   const fetchEndorsements = async () => {
     try {
+      setEndorsementsLoading(true);
       console.log('Fetching endorsements for:', githubName);
-      const endpoint = endorsementType === 'received' ? 'getEndorsementsForUser' : 'getEndorsementsByUser';
-      console.log("endpoint", endpoint)
-      const response = await fetch(`${NEXT_PUBLIC_URL}/api/${endpoint}`, {
+      
+      // Fetch received endorsements
+      const receivedResponse = await fetch(`${NEXT_PUBLIC_URL}/api/getEndorsementForUser`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -124,11 +126,27 @@ export default function ProfilePage() {
         body: JSON.stringify({ githubName }),
       });
 
-      const responseData = await response.json();
-      console.log('Fetched endorsement data:', responseData);
+      const receivedData = await receivedResponse.json();
+      console.log('Fetched received endorsement data:', receivedData);
 
-      if (responseData && responseData.endorsements) {
-        setEndorsements(responseData.endorsements);
+      if (receivedData && receivedData.endorsements) {
+        setReceivedEndorsements(receivedData.endorsements);
+      }
+
+      // Fetch given endorsements
+      const givenResponse = await fetch(`${NEXT_PUBLIC_URL}/api/getEndorsementByUser`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ githubName }),
+      });
+
+      const givenData = await givenResponse.json();
+      console.log('Fetched given endorsement data:', givenData);
+
+      if (givenData && givenData.endorsements) {
+        setGivenEndorsements(givenData.endorsements);
       }
     } catch (error) {
       console.error('Error fetching endorsements:', error);
@@ -154,6 +172,56 @@ export default function ProfilePage() {
           <p className='text-sm text-gray-500 mb-2'>No specific endorsements</p>
         )}
       </>
+    );
+  };
+
+  const renderEndorsements = () => {
+    const endorsementsToRender =
+      endorsementType === 'received' ? receivedEndorsements : givenEndorsements;
+
+    if (endorsementsLoading) {
+      return <p>Loading...</p>;
+    }
+
+    if (endorsementsToRender.length === 0) {
+      return <p>No endorsements yet.</p>;
+    }
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 mx-3 lg:gap-8 max-w-6xl overflow-y-auto">
+        {endorsementsToRender.map((endorsement, index) => (
+          <div
+            key={index}
+            className="p-4 bg-white border rounded-lg shadow-md"
+          >
+            <div className="flex items-start mb-2">
+              {endorsement.endorserAvatar && (
+                <Image
+                  src={endorsement.endorserAvatar}
+                  alt={endorsement.endorserName || ''}
+                  width={40}
+                  height={40}
+                  className="mr-2 rounded-full"
+                />
+              )}
+              <div>
+                <h3 className="text-lg font-semibold">
+                  {endorsementType === 'received'
+                    ? endorsement.endorserName
+                    : endorsement.recipientname}
+                </h3>
+                {renderEndorsementContent(endorsement)}
+                <p className="text-sm text-gray-500">
+                  {format(
+                    new Date(endorsement.createdAt || ''),
+                    'MMMM dd, yyyy'
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     );
   };
 
@@ -221,44 +289,7 @@ export default function ProfilePage() {
                 Given
               </button>
             </div>
-            {endorsementsLoading ? (
-              <p>Loading...</p>
-            ) : endorsements.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 mx-3 lg:gap-8 max-w-6xl overflow-y-auto">
-                {endorsements.map((endorsement, index) => (
-                  <div
-                    key={index}
-                    className="p-4 bg-white border rounded-lg shadow-md"
-                  >
-                    <div className="flex items-start mb-2">
-                      {endorsement.endorserAvatar && (
-                        <Image
-                          src={endorsement.endorserAvatar}
-                          alt={endorsement.endorserName || ''}
-                          width={40}
-                          height={40}
-                          className="mr-2 rounded-full"
-                        />
-                      )}
-                      <div>
-                        <h3 className="text-lg font-semibold">
-                          {endorsement.endorserName}
-                        </h3>
-                        {renderEndorsementContent(endorsement)}
-                        <p className="text-sm text-gray-500">
-                          {format(
-                            new Date(endorsement.createdAt || ''),
-                            'MMMM dd, yyyy'
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p>No endorsements yet.</p>
-            )}
+            {renderEndorsements()}
           </div>
         );
       case 'verify':
@@ -290,11 +321,11 @@ export default function ProfilePage() {
           <button onClick={() => setActiveTab('verify')} className={tabClasses('verify')}>
             Verify
           </button>
-          <button onClick={() => setActiveTab('repos')} className={tabClasses('repos')}>
-            Repositories
-          </button>
           <button onClick={() => setActiveTab('insights')} className={tabClasses('insights')}>
             Insights
+          </button>
+          <button onClick={() => setActiveTab('repos')} className={tabClasses('repos')}>
+            Repositories
           </button>
         </nav>
       </div>
