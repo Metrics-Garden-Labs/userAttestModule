@@ -266,9 +266,9 @@ export default function ProfilePage() {
             <IoIosMenu className="h-6 w-6" />
           </button>
 
-          <button className="" onClick={() => {}} aria-label="Go Back">
+          {/* <button className="" onClick={() => {}} aria-label="Go Back">
             <IoIosArrowBack className="h-6 w-6" />
-          </button>
+          </button> */}
 
           <button onClick={() => setActiveTab('repos')} className={tabClasses('repos')}>
             Repositories
