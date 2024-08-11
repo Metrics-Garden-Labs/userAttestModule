@@ -15,6 +15,7 @@ export const POST = async (request: Request) => {
         Authorization: `Bearer ${accessToken}`,
       },
     });
+    console.log("token", accessToken);
 
     if (!userResponse.ok) {
       throw new Error("Failed to fetch GitHub user data");
