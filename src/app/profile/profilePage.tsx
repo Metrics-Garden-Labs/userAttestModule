@@ -296,9 +296,6 @@ export default function ProfilePage() {
           <button onClick={() => setActiveTab('insights')} className={tabClasses('insights')}>
             Insights
           </button>
-          <button onClick={() => setActiveTab('verify')} className={tabClasses('verify')}>
-            Verify
-          </button>
         </nav>
       </div>
 
