@@ -5,9 +5,7 @@ import { eq } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
-    const { hash, attestationUID } = await request.json();
-
-    const githubName = request.cookies.get("githubName")?.value;
+    const { attestationUID, githubName } = await request.json();
 
     if (!githubName) {
       return NextResponse.json(

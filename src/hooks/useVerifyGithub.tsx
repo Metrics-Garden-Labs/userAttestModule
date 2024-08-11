@@ -24,7 +24,7 @@ export const useCreatGithubAttestation = () => {
       { name: 'VerifiedGithub', value: true, type: 'bool' },
       { name: 'txHash', value: hash, type: 'bytes32' },
     ]);
-
+    
     const easop = new EAS('0x4200000000000000000000000000000000000021');
     easop.connect(signer);
     console.log('recipient', await signer.getAddress());
@@ -65,6 +65,7 @@ export const useCreatGithubAttestation = () => {
         
         // Add the recommendation to the database
         await addVerifiedStatusToDatabase(hash, newAttestationUID, githubName);
+        console.log('Attestation created:', newAttestationUID);
         
         return newAttestationUID;
       } else {
@@ -88,7 +89,6 @@ export const useCreatGithubAttestation = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          hash,
           attestationUID,
           githubName
         }),

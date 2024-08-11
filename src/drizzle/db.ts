@@ -65,3 +65,19 @@ export const getEndorsementsByUsername = async (username: string) => {
     throw error;
   }
 };
+
+export const getUserVerificationStatus = async (username: string) => {
+  try {
+    const user = await db
+      .select({
+        verified: users.verified,
+      })
+      .from(users)
+      .where(eq(users.username, username));
+
+    return user[0];
+  } catch (error) {
+    console.error("Error fetching user verification status:", error);
+    throw error;
+  }
+};

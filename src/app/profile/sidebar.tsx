@@ -1,5 +1,5 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { LuArrowUpRight } from "react-icons/lu";
 import Image from 'next/image';
 import Link from 'next/link';
@@ -16,6 +16,7 @@ const Sidebar = () => {
   const { data: session, status } = useSession();
   const [githubName, setGithubName] = useLocalStorage<string>('githubName', '');
   const [githubImage, setGithubImage] = useLocalStorage<string>('githubImage', '');
+  const [isVerified, setIsVerified] = useState(false);
 
   useEffect(() => {
     if (session?.user?.name && session.provider === 'github') {
@@ -25,6 +26,29 @@ const Sidebar = () => {
       setGithubImage(session.user.image);
     }
   }, [session, setGithubName, setGithubImage]);
+
+  useEffect(() => {
+    const checkVerificationStatus = async () => {
+      if (githubName) {
+        console.log('Checking verification status for:', githubName);
+        try {
+          const response = await fetch('/api/getVerificationStatus', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ githubName }),
+          });
+          const data = await response.json();
+          setIsVerified(data.verified);
+        } catch (error) {
+          console.error('Error checking verification status:', error);
+        }
+      }
+    };
+
+    checkVerificationStatus();
+  }, [githubName]);
 
   const getProjectDuration = (createdAt: Date | null | undefined) => {
     if (!createdAt) return 'Unknown';
@@ -45,7 +69,7 @@ const Sidebar = () => {
             <div className="h-60 bg-gray-300 rounded-full flex justify-center items-center">
               {session ? (
                 <Image
-                  src={githubImage || '/default-avatar.png'} // Provide a default image
+                  src={githubImage || '/default-avatar.png'}
                   alt={githubName || 'User avatar'}
                   width={144}
                   height={144}
@@ -56,7 +80,18 @@ const Sidebar = () => {
                 </div>
               )}
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">{githubName || 'Anonymous'}</h2>
+            <div className="flex items-center">
+              <h2 className="text-2xl font-bold text-gray-900 mr-2">{githubName || 'Anonymous'}</h2>
+              {isVerified && (
+                <Image
+                  src="/githubverified.png"
+                  alt="Verified"
+                  width={24}
+                  height={24}
+                  className="inline-block"
+                />
+              )}
+            </div>
             <div className="">
               <Link href={`https://github.com/${githubName}` || '#'}>
                 <p className='flex items-center '>

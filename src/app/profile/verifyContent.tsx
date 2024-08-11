@@ -14,8 +14,10 @@ import { ProofStatus } from '@/lib/utils/ZkRegex';
 import { useSwitchChain } from 'wagmi';
 import InputDataDisplay from '../components/ui/EmailDataDisplay';
 import FileUploadInput from '../components/ui/UploadFile';
-import { useCreatGithubAttestation } from '@/hooks/useVerifiyGithub';
+import { useCreatGithubAttestation } from '@/hooks/useVerifyGithub';
 import useLocalStorage from '@/hooks/useLocalStorage';
+import AttestationCreationModal from '../components/ui/AttestationCreationModal';
+import AttestationConfirmationModal from '../components/ui/AttestationConfirmationModal';
 
 
 export interface ContentProps {
@@ -55,17 +57,21 @@ export function VerifyContent(props: ContentProps) {
   const [emailUploaded, setEmailUploaded] = useState(false);
   const [isAttesting, setIsAttesting] = useState(false);
   const { createGithubAttestation, attestationUID } = useCreatGithubAttestation();
+  const [currentAttestationUID, setCurrentAttestationUID] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const { switchChain } = useSwitchChain();
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
 
   const [activeJob, setActiveJob] = useState(null);
+  // useEffect(() => {
+  //    switchChain({ chainId: 11155111});
+  //   }, []);
 
-  const toggleJobView = (jobId : any) => {
-    setActiveJob(activeJob === jobId ? null : jobId);
-  };
   useEffect(() => {
-     switchChain({ chainId: 11155111});
-    }, []);
-
+    switchChain({ chainId:     11155420      });
+   }, []);
 
   useEffect(() => {
     console.log("Component rendered. Messages:", messages);
@@ -90,6 +96,38 @@ export function VerifyContent(props: ContentProps) {
   useEffect(() => {
     console.log("Messages state or emailUploaded changed:", { messages, emailUploaded });
   }, [messages, emailUploaded]);
+
+  const toggleJobView = (jobId : any) => {
+    setActiveJob(activeJob === jobId ? null : jobId);
+  };
+
+  const renderModal = () => {
+    if (!isModalOpen) return null;
+
+    if (isAttesting) {
+      return <AttestationCreationModal />;
+    } else if (showConfirmation && currentAttestationUID) {
+      return (
+        <AttestationConfirmationModal
+          attestationUID={currentAttestationUID}
+          onClose={handleCloseConfirmation}
+        />
+      );
+    }
+    return null;
+  };
+
+  const onClose = () => {
+    setIsModalOpen(false);
+    setShowConfirmation(false);
+    setCurrentAttestationUID(null);
+  };
+
+  const handleCloseConfirmation = () => {
+    setShowConfirmation(false);
+    setCurrentAttestationUID(null);
+    onClose(); // Close the entire modal after confirmation
+  };
 
   async function filterEmails(query: string) {
     try {
@@ -130,10 +168,12 @@ export function VerifyContent(props: ContentProps) {
       }
   
       setIsAttesting(true);
+      setIsModalOpen(true);
       try {
         const newAttestationUID = await createGithubAttestation(hash);
         if (newAttestationUID) {
-          alert("GitHub ownership attested successfully!");
+          setCurrentAttestationUID(newAttestationUID);
+          setShowConfirmation(true);
         } else {
           throw new Error('Failed to create attestation');
         }
@@ -570,6 +610,7 @@ export function VerifyContent(props: ContentProps) {
             <p className="mt-2">Here is a link to your attestation!</p>
           </section>
         </div>
+        {renderModal()}
       </div>
     </div>
   );

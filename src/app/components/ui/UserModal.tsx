@@ -87,7 +87,22 @@ export default function UserModal({ user, onClose }: UserModalProps) {
           </div>
         )}
       </div>
-      <h2 className="text-2xl font-bold mb-2">{user.name}</h2>
+      <div className="flex items-center justify-center mb-2">
+      <h2 className=" text-xl font-semibold text-center">
+        {user.name}
+      </h2>
+      {user.verified && (
+        <Image
+          src="/githubverified.png"
+          alt="Verified"
+          width={24}
+          height={24}
+          className="inline-block ml-2"
+          title="GitHub Verified"
+        />
+
+      )}
+      </div>
       <p className="text-gray-600 mb-4">@{user.username}</p>
       {user.bio && <p className="text-center mb-4">{user.bio}</p>}
       <div className="w-full flex flex-col items-center">

@@ -54,6 +54,8 @@ export default function ProfilePage() {
       fetchEndorsements();
     }
   }, [activeTab, githubName]);
+
+  
   
   const entry: Entry = {
     id: 1,  
@@ -83,8 +85,10 @@ export default function ProfilePage() {
     },
     emailQuery: "[GitHub] A third-party OAuth application has been added to your account from: noreply@github.com",
 
-    contractAddress: "0xd8f77783b77ab4a128c98f40ba2bb44b7255c5a9",
-    verifierContractAddress: "0x0f8060ac4e4a376dcf821fed126b3ac1e74b9c8e",
+    // contractAddress: "0xd8f77783b77ab4a128c98f40ba2bb44b7255c5a9",
+    contractAddress: "0x14e94CA306960A0A9cC1f257a1DCfa4cc0d4B12b",
+    // verifierContractAddress: "0x0f8060ac4e4a376dcf821fed126b3ac1e74b9c8e",
+    verifierContractAddress: "0x60c72A58602b4eb0e4DB79dB4C3DfC19df3746E9",
     createdAt: new Date(),  // Assuming current date. Replace with actual date if available.
     updatedAt: new Date()   // Assuming current date. Replace with actual date if available.
 };
