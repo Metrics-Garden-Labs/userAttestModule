@@ -26,7 +26,7 @@ function UserCard({ user }: UserCardProps) {
       </div>
       <div className="flex items-center justify-center mb-2">
       <h3 className=" text-xl font-semibold text-center">
-        {user.name}
+        {user.username}
       </h3>
       {user.verified && (
         <Image
