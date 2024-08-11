@@ -69,6 +69,7 @@ const Sidebar = () => {
                 width={24}
                 height={24}
                 className="inline-block"
+                title="GitHub Verified"
               />
             )}
           </div>
@@ -82,7 +83,6 @@ const Sidebar = () => {
           </div>
           <div>
             <div className="text-sm font-medium text-gray-500">Attestations: </div>
-            <div className="text-sm font-medium text-gray-500">Created <span>ago</span></div>
           </div>
         </div>
       </div>

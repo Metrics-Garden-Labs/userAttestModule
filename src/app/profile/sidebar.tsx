@@ -1,22 +1,16 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { LuArrowUpRight } from "react-icons/lu";
 import Image from 'next/image';
 import Link from 'next/link';
-import { BsGlobe2 } from 'react-icons/bs';
 import { FaGithub } from 'react-icons/fa6';
 import { useSession } from 'next-auth/react';
 import useLocalStorage from '@/hooks/useLocalStorage';
-
-function classNames(...classes: (string | undefined)[]) {
-  return classes.filter(Boolean).join(' ');
-}
 
 const Sidebar = () => {
   const { data: session, status } = useSession();
   const [githubName, setGithubName] = useLocalStorage<string>('githubName', '');
   const [githubImage, setGithubImage] = useLocalStorage<string>('githubImage', '');
-  const [isVerified, setIsVerified] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
     if (session?.user?.name && session.provider === 'github') {
@@ -28,11 +22,10 @@ const Sidebar = () => {
   }, [session, setGithubName, setGithubImage]);
 
   useEffect(() => {
-    const checkVerificationStatus = async () => {
+    const fetchUserData = async () => {
       if (githubName) {
-        console.log('Checking verification status for:', githubName);
         try {
-          const response = await fetch('/api/getVerificationStatus', {
+          const response = await fetch('/api/getUserData', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -40,25 +33,27 @@ const Sidebar = () => {
             body: JSON.stringify({ githubName }),
           });
           const data = await response.json();
-          setIsVerified(data.verified);
+          setUserData(data.userData);
         } catch (error) {
-          console.error('Error checking verification status:', error);
+          console.error('Error fetching user data:', error);
         }
       }
     };
 
-    checkVerificationStatus();
+    fetchUserData();
   }, [githubName]);
 
-  const getProjectDuration = (createdAt: Date | null | undefined) => {
+  const getProjectDuration = (createdAt: string | null) => {
     if (!createdAt) return 'Unknown';
 
-    const createdDate = new Date(createdAt);
-    const currentDate = new Date();
-    const diffInMonths = (currentDate.getFullYear() - createdDate.getFullYear()) * 12 +
-      (currentDate.getMonth() - createdDate.getMonth());
+    const created = new Date(createdAt);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - created.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    return `${diffInMonths} months`;
+    if (diffDays < 30) return `${diffDays} days`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months`;
+    return `${Math.floor(diffDays / 365)} years`;
   };
 
   return (
@@ -82,7 +77,7 @@ const Sidebar = () => {
             </div>
             <div className="flex items-center">
               <h2 className="text-2xl font-bold text-gray-900 mr-2">{githubName || 'Anonymous'}</h2>
-              {isVerified && (
+              {userData?.verified && (
                 <Image
                   src="/githubverified.png"
                   alt="Verified"
@@ -101,8 +96,12 @@ const Sidebar = () => {
               </Link>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-500">Attestations: </div>
-              <div className="text-sm font-medium text-gray-500">Created <span>ago</span></div>
+              <div className="text-sm font-medium text-gray-500">
+                Attestations: {userData?.endorsementCount || 0}
+              </div>
+              <div className="text-sm font-medium text-gray-500">
+                Created {getProjectDuration(userData?.createdAt)} ago
+              </div>
             </div>
           </div>
         </div>

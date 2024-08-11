@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/vercel-postgres";
 import { sql } from "@vercel/postgres";
 import * as schema from "./schema";
 import { users, userendorsements } from "./schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, count } from "drizzle-orm";
 
 import { UserEndorsements, Users } from "@/lib/utils/types";
 
@@ -80,4 +80,26 @@ export const getUserVerificationStatus = async (username: string) => {
     console.error("Error fetching user verification status:", error);
     throw error;
   }
+};
+
+export const getUserDataWithEndorsements = async (githubName: string) => {
+  const user = await db
+    .select()
+    .from(users)
+    .where(eq(users.username, githubName))
+    .limit(1);
+
+  if (user.length === 0) {
+    throw new Error("User not found");
+  }
+
+  const endorsementCount = await db
+    .select({ count: count() })
+    .from(userendorsements)
+    .where(eq(userendorsements.recipientname, githubName));
+
+  return {
+    ...user[0],
+    endorsementCount: endorsementCount[0].count,
+  };
 };
