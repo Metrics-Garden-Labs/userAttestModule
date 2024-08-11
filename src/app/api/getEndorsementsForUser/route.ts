@@ -1,4 +1,4 @@
-import { getEndorsementsGivenByUsername } from "../../../drizzle/db";
+import { getEndorsementsRecievedByUsername } from "../../../drizzle/db";
 import { NextResponse } from "next/server";
 
 export const POST = async (request: Request) => {
@@ -6,7 +6,7 @@ export const POST = async (request: Request) => {
     const { githubName } = await request.json();
     console.log(`Received request to get endorsements for user ${githubName}`);
 
-    const endorsements = await getEndorsementsGivenByUsername(githubName);
+    const endorsements = await getEndorsementsRecievedByUsername(githubName);
     console.log("User Endorsements", endorsements);
 
     return NextResponse.json({ endorsements }, { status: 200 });

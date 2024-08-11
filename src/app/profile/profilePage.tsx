@@ -28,6 +28,8 @@ export default function ProfilePage() {
   const [githubName] = useLocalStorage<string>('githubName', '');
   const [endorsements, setEndorsements] = useState<UserEndorsements[]>([]);
   const [endorsementsLoading, setEndorsementsLoading] = useState(true);
+  const [endorsementType, setEndorsementType] = useState<'given' | 'received'>('received');
+
 
   useEffect(() => {
     const fetchRepositories = async () => {
@@ -99,6 +101,11 @@ export default function ProfilePage() {
       activeTab === tabName ? 'border-b-2 border-black' : 'text-gray-600 hover:text-black'
     }`;
 
+    const subTabClasses = (tabName: string) =>
+    `cursor-pointer px-4 py-2 text-sm font-semibold mr-2 ${
+      endorsementType === tabName ? 'border-b-2 border-black' : 'text-gray-600 hover:text-black'
+    }`;
+
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -107,7 +114,8 @@ export default function ProfilePage() {
   const fetchEndorsements = async () => {
     try {
       console.log('Fetching endorsements for:', githubName);
-      const response = await fetch(`${NEXT_PUBLIC_URL}/api/getEndorsementsByUser`, {
+      const endpoint = endorsementType === 'received' ? 'getEndorsementForUser' : 'getEndorsementByUser';
+      const response = await fetch(`${NEXT_PUBLIC_URL}/api/getEndorsementForyUser`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -203,47 +211,55 @@ export default function ProfilePage() {
       case 'insights':
           return (
             <div className="text-black text-left">
-              <h3 className="font-semibold mb-4">Insights</h3>
-              {endorsementsLoading ? (
-                <p>Loading...</p>
-              ) : endorsements.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 mx-3 lg:gap-8 max-w-6xl overflow-y-auto">
-                  {endorsements.map((endorsement, index) => (
-                    <div
-                      key={index}
-                      className="p-4 bg-white border rounded-lg shadow-md"
-                    >
-                      <div className="flex items-start mb-2">
-                        {endorsement.endorserAvatar && (
-                          <Image
-                            src={endorsement.endorserAvatar}
-                            alt={endorsement.endorserName || ''}
-                            width={40}
-                            height={40}
-                            className="mr-2 rounded-full"
-                          />
-                        )}
-                        <div>
-                          <h3 className="text-lg font-semibold">
-                            {endorsement.endorserName}
-                          </h3>
-                          {renderEndorsementContent(endorsement)}
-                          <p className="text-sm text-gray-500">
-                            {format(
-                              new Date(endorsement.createdAt || ''),
-                              'MMMM dd, yyyy'
-                            )}
-                          </p>
-                        </div>
+            <h3 className="font-semibold mb-4">Insights</h3>
+            <div className="flex space-x-4 mb-4">
+              <button onClick={() => setEndorsementType('received')} className={subTabClasses('received')}>
+                Received
+              </button>
+              <button onClick={() => setEndorsementType('given')} className={subTabClasses('given')}>
+                Given
+              </button>
+            </div>
+            {endorsementsLoading ? (
+              <p>Loading...</p>
+            ) : endorsements.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 mx-3 lg:gap-8 max-w-6xl overflow-y-auto">
+                {endorsements.map((endorsement, index) => (
+                  <div
+                    key={index}
+                    className="p-4 bg-white border rounded-lg shadow-md"
+                  >
+                    <div className="flex items-start mb-2">
+                      {endorsement.endorserAvatar && (
+                        <Image
+                          src={endorsement.endorserAvatar}
+                          alt={endorsement.endorserName || ''}
+                          width={40}
+                          height={40}
+                          className="mr-2 rounded-full"
+                        />
+                      )}
+                      <div>
+                        <h3 className="text-lg font-semibold">
+                          {endorsement.endorserName}
+                        </h3>
+                        {renderEndorsementContent(endorsement)}
+                        <p className="text-sm text-gray-500">
+                          {format(
+                            new Date(endorsement.createdAt || ''),
+                            'MMMM dd, yyyy'
+                          )}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p>No endorsements yet.</p>
-              )}
-            </div>
-          );
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No endorsements yet.</p>
+            )}
+          </div>
+        );
       case 'verify':
         return (
         <div className="text-black text-left">

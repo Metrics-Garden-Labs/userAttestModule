@@ -37,7 +37,7 @@ export const insertEndorsement = async (
   return result[0];
 };
 
-export const getEndorsementsByUsername = async (username: string) => {
+export const getEndorsementsRecievedByUsername = async (username: string) => {
   try {
     const endorsementsList = await db
       .select({
@@ -57,6 +57,35 @@ export const getEndorsementsByUsername = async (username: string) => {
       .from(userendorsements)
       .innerJoin(users, eq(userendorsements.endorserId, users.id))
       .where(eq(userendorsements.recipientname, username))
+      .orderBy(desc(userendorsements.createdAt));
+
+    return endorsementsList;
+  } catch (error) {
+    console.error("Error fetching endorsements:", error);
+    throw error;
+  }
+};
+
+export const getEndorsementsGivenByUsername = async (username: string) => {
+  try {
+    const endorsementsList = await db
+      .select({
+        id: userendorsements.id,
+        recipientId: userendorsements.recipientId,
+        recipientname: userendorsements.recipientname,
+        endorserId: userendorsements.endorserId,
+        endorserName: users.username,
+        endorserAvatar: users.image,
+        endorsername: userendorsements.endorsername,
+        ecc: userendorsements.ecc,
+        oprd: userendorsements.oprd,
+        optooling: userendorsements.optooling,
+        attestationuid: userendorsements.attestationuid,
+        createdAt: userendorsements.createdAt,
+      })
+      .from(userendorsements)
+      .innerJoin(users, eq(userendorsements.recipientId, users.id))
+      .where(eq(userendorsements.endorsername, username))
       .orderBy(desc(userendorsements.createdAt));
 
     return endorsementsList;
