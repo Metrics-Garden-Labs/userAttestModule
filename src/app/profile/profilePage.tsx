@@ -118,7 +118,7 @@ export default function ProfilePage() {
       console.log('Fetching endorsements for:', githubName);
       
       // Fetch received endorsements
-      const receivedResponse = await fetch(`${NEXT_PUBLIC_URL}/api/getEndorsementForUser`, {
+      const receivedResponse = await fetch(`${NEXT_PUBLIC_URL}/api/getEndorsementsForUser`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -134,7 +134,7 @@ export default function ProfilePage() {
       }
 
       // Fetch given endorsements
-      const givenResponse = await fetch(`${NEXT_PUBLIC_URL}/api/getEndorsementByUser`, {
+      const givenResponse = await fetch(`${NEXT_PUBLIC_URL}/api/getEndorsementsByUser`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
