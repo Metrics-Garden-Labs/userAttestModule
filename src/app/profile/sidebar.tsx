@@ -99,9 +99,6 @@ const Sidebar = () => {
               <div className="text-sm font-medium text-gray-500">
                 Attestations: {userData?.endorsementCount || 0}
               </div>
-              <div className="text-sm font-medium text-gray-500">
-                Created {getProjectDuration(userData?.createdAt)} ago
-              </div>
             </div>
           </div>
         </div>

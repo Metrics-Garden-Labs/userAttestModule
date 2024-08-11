@@ -1,6 +1,7 @@
 
 import React from 'react';
 import LoginForm from './components/LoginForm';
+import Link from 'next/link';
 
 const Home: React.FC = () => {
   return (
@@ -12,6 +13,9 @@ const Home: React.FC = () => {
       <p className="text-lg text-gray-700 max-w-md leading-relaxed">
         Welcome to Metrics Garden Labs. We’re working on something amazing! Stay tuned for more updates.
       </p>
+      <Link href='/searchUsers'>
+        Go to Search Users!
+      </Link>
     </div>
   );
 };

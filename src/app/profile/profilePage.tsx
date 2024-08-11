@@ -115,7 +115,7 @@ export default function ProfilePage() {
     try {
       console.log('Fetching endorsements for:', githubName);
       const endpoint = endorsementType === 'received' ? 'getEndorsementForUser' : 'getEndorsementByUser';
-      const response = await fetch(`${NEXT_PUBLIC_URL}/api/getEndorsementForyUser`, {
+      const response = await fetch(`${NEXT_PUBLIC_URL}/api/${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -286,6 +286,9 @@ export default function ProfilePage() {
             <IoIosArrowBack className="h-6 w-6" />
           </button> */}
 
+          <button onClick={() => setActiveTab('verify')} className={tabClasses('verify')}>
+            Verify
+          </button>
           <button onClick={() => setActiveTab('repos')} className={tabClasses('repos')}>
             Repositories
           </button>
