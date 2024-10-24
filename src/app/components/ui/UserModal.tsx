@@ -8,6 +8,7 @@ import { FaGithub } from "react-icons/fa";
 import { useCreateReviewAttestation } from "../../../hooks/useReviewAttestation";
 import AttestationCreationModal from "./AttestationCreationModal";
 import AttestationConfirmationModal from "./AttestationConfirmationModal";
+import { PiSealCheckFill } from "react-icons/pi";
 
 interface UserModalProps {
   user: Users;
@@ -87,14 +88,10 @@ export default function UserModal({ user, onClose }: UserModalProps) {
       <div className="flex items-center justify-center mb-2">
         <h2 className=" text-xl font-semibold text-center">{user.name}</h2>
         {user.verified && (
-          <Image
-            src="/githubverified.png"
-            alt="Verified"
-            width={24}
-            height={24}
-            className="inline-block ml-2"
-            title="GitHub Verified"
-          />
+         <PiSealCheckFill
+		 className="inline-block ml-2 text-[#E67529]"
+		 size={24}
+	   />
         )}
       </div>
       <p className="text-gray-600 mb-4">@{user.username}</p>
@@ -115,7 +112,8 @@ export default function UserModal({ user, onClose }: UserModalProps) {
             <strong>Twitter:</strong> @{user.twitter}
           </p>
         )}
-        <Link href={user.url || ""} className=" bg-[#E67529] text-black mb-4">
+		<hr className="w-full border-gray-300 my-4" />
+        <Link href={user.url || ""} className=" text-black  mb-4">
           <FaGithub size={24} />
         </Link>
       </div>
