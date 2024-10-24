@@ -46,7 +46,7 @@ const Sidebar = () => {
   return (
     <div className='lg:w-72 bg-white h-screen pt-16 pb-8'>
       <div className="flex flex-col h-full overflow-y-auto">
-        <div className="py-10 px-8 flex grow flex-col gap-y-5 bg-white overflow-y-auto px-6 pb-4">
+        <div className="py-10 flex grow flex-col gap-y-5 items-center bg-white/5 bg-white overflow-y-auto px-6 pb-4">
           <div className="h-60 bg-gray-300 rounded-full flex justify-center items-center">
             {session ? (
               <Image
