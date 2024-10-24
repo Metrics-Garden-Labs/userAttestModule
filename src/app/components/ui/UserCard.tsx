@@ -1,6 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import { Users } from "../../../../src/lib/utils/types";
+import { PiSealCheckFill } from "react-icons/pi";
 
 interface UserCardProps {
   user: Users;
@@ -9,7 +10,7 @@ interface UserCardProps {
 
 function UserCard({ user, onSelect }: UserCardProps) {
   return (
-    <div className="flex flex-col p-6 border justify-center items-center bg-white text-black border-gray-300 rounded-md w-full h-72 shadow-xl">
+    <div className="flex flex-col p-6 hover:bg-black/5 border justify-center items-center bg-white text-black border-gray-300 rounded-md w-full h-72 shadow-xl">
       <div className="w-36 h-36 shrink-0 rounded-full overflow-hidden mb-4 relative">
         {user.image ? (
           <Image
@@ -27,14 +28,10 @@ function UserCard({ user, onSelect }: UserCardProps) {
       <div className="flex items-center justify-center mb-2">
         <h3 className=" text-xl font-semibold text-center">{user.username}</h3>
         {user.verified && (
-          <Image
-            src="/githubverified.png"
-            alt="Verified"
-            width={24}
-            height={24}
-            className="inline-block ml-2 shrink-0"
-            title="GitHub Verified"
-          />
+          <PiSealCheckFill
+			className="inline-block ml-2 text-[#E67529]"
+			size={24}
+		  />
         )}
       </div>
       {user.bio && (
@@ -44,9 +41,9 @@ function UserCard({ user, onSelect }: UserCardProps) {
       )}
       <button
         onClick={onSelect}
-        className="btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg"
+        className="btn btn-primary px-6 py-1 mt-2 bg-[#424242] cursor-pointer text-white font-thin rounded-md hover:bg-black"
       >
-        Review
+        Rate
       </button>
     </div>
   );

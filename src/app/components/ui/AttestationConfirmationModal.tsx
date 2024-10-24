@@ -18,11 +18,11 @@ const AttestationConfirmationModal: React.FC<AttestationConfirmationModalProps> 
         <h2 className="text-xl font-bold mb-4 text-center">Attestation Created</h2>
         <p className="text-center">Your attestation has been successfully created.</p>
         <Link href={attestationLink} target="_blank" rel="noopener noreferrer">
-          <p className='text-blue-500 hover:underline text-center overflow-y-auto'>View Attestation</p>
+          <p className='bg-[#E67529] text-white hover:underline text-center overflow-y-auto'>View Attestation</p>
         </Link>
         <div className="flex justify-center mt-4">
           <button
-            className="px-4 py-2 bg-blue-500 text-white rounded-md"
+            className="btn bg-headerblack text-white hover:bg-black"
             onClick={onClose}
           >
             Close

@@ -115,7 +115,7 @@ export default function UserModal({ user, onClose }: UserModalProps) {
             <strong>Twitter:</strong> @{user.twitter}
           </p>
         )}
-        <Link href={user.url || ""} className="mb-4">
+        <Link href={user.url || ""} className=" bg-[#E67529] text-black mb-4">
           <FaGithub size={24} />
         </Link>
       </div>
@@ -137,7 +137,7 @@ export default function UserModal({ user, onClose }: UserModalProps) {
             key={key}
             onClick={() => toggleEndorsement(key as keyof typeof endorsements)}
             className={`mb-2 px-4 py-2 rounded-lg text-sm ${
-              value ? "bg-black text-white" : "bg-gray-200 text-gray-800"
+              value ? "bg-[#E67529] text-white" : "bg-gray-200 text-gray-800"
             }`}
           >
             {key === "ethereumCore" && "Ethereum Core Contributions"}
@@ -148,7 +148,7 @@ export default function UserModal({ user, onClose }: UserModalProps) {
       </div>
       <button
         onClick={handleSubmitEndorsements}
-        className="btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg"
+        className="btn bg-headerblack text-white hover:bg-black"
         disabled={loading}
       >
         {loading ? "Submitting..." : "Submit Endorsements"}

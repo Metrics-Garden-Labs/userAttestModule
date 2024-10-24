@@ -1,24 +1,31 @@
-import React, { useState, useEffect, FormEvent, useRef, use } from 'react';
-import { useSession, signIn, signOut } from 'next-auth/react';
-import { fetchEmailList, fetchEmailsRaw, useZkRegex } from '@zk-email/zk-regex-sdk';
-import PostalMime from 'postal-mime';
-import { useAccount, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
-import { BaseError, Hex } from 'viem';
-import '@rainbow-me/rainbowkit/styles.css';
-import { circuitOutputToArgs, parseOutput } from '@/lib/contract';
-import { calculateSignalLength } from '@/lib/code-gen/utils';
-import { Entry } from '@/lib/utils/types';
-import { Check, X } from 'lucide-react';
-import { SimpleDialog } from '../components/ui/SimpleDialog';
-import { ProofStatus } from '@/lib/utils/ZkRegex';
-import { useSwitchChain } from 'wagmi';
-import InputDataDisplay from '../components/ui/EmailDataDisplay';
-import FileUploadInput from '../components/ui/UploadFile';
-import { useCreatGithubAttestation } from '@/hooks/useVerifyGithub';
-import useLocalStorage from '@/hooks/useLocalStorage';
-import AttestationCreationModal from '../components/ui/AttestationCreationModal';
-import AttestationConfirmationModal from '../components/ui/AttestationConfirmationModal';
-
+import React, { useState, useEffect, FormEvent, useRef, use } from "react";
+import { useSession, signIn, signOut } from "next-auth/react";
+import {
+  fetchEmailList,
+  fetchEmailsRaw,
+  useZkRegex,
+} from "@zk-email/zk-regex-sdk";
+import PostalMime from "postal-mime";
+import {
+  useAccount,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from "wagmi";
+import { BaseError, Hex } from "viem";
+import "@rainbow-me/rainbowkit/styles.css";
+import { circuitOutputToArgs, parseOutput } from "@/lib/contract";
+import { calculateSignalLength } from "@/lib/code-gen/utils";
+import { Entry } from "@/lib/utils/types";
+import { Check, X } from "lucide-react";
+import { SimpleDialog } from "../components/ui/SimpleDialog";
+import { ProofStatus } from "@/lib/utils/ZkRegex";
+import { useSwitchChain } from "wagmi";
+import InputDataDisplay from "../components/ui/EmailDataDisplay";
+import FileUploadInput from "../components/ui/UploadFile";
+import { useCreatGithubAttestation } from "@/hooks/useVerifyGithub";
+import useLocalStorage from "@/hooks/useLocalStorage";
+import AttestationCreationModal from "../components/ui/AttestationCreationModal";
+import AttestationConfirmationModal from "../components/ui/AttestationConfirmationModal";
 
 export interface ContentProps {
   entry: Entry;
@@ -56,13 +63,15 @@ export function VerifyContent(props: ContentProps) {
   const [signalLength, setSignalLength] = useState<number>(1);
   const [emailUploaded, setEmailUploaded] = useState(false);
   const [isAttesting, setIsAttesting] = useState(false);
-  const { createGithubAttestation, attestationUID } = useCreatGithubAttestation();
-  const [currentAttestationUID, setCurrentAttestationUID] = useState<string | null>(null);
+  const { createGithubAttestation, attestationUID } =
+    useCreatGithubAttestation();
+  const [currentAttestationUID, setCurrentAttestationUID] = useState<
+    string | null
+  >(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { switchChain } = useSwitchChain();
   const [showConfirmation, setShowConfirmation] = useState(false);
-
 
   const [activeJob, setActiveJob] = useState(null);
   // useEffect(() => {
@@ -70,8 +79,8 @@ export function VerifyContent(props: ContentProps) {
   //   }, []);
 
   useEffect(() => {
-    switchChain({ chainId:     11155420      });
-   }, []);
+    switchChain({ chainId: 11155420 });
+  }, []);
 
   useEffect(() => {
     console.log("Component rendered. Messages:", messages);
@@ -94,10 +103,13 @@ export function VerifyContent(props: ContentProps) {
   }, [messages]);
 
   useEffect(() => {
-    console.log("Messages state or emailUploaded changed:", { messages, emailUploaded });
+    console.log("Messages state or emailUploaded changed:", {
+      messages,
+      emailUploaded,
+    });
   }, [messages, emailUploaded]);
 
-  const toggleJobView = (jobId : any) => {
+  const toggleJobView = (jobId: any) => {
     setActiveJob(activeJob === jobId ? null : jobId);
   };
 
@@ -131,19 +143,24 @@ export function VerifyContent(props: ContentProps) {
 
   async function filterEmails(query: string) {
     try {
-      const res = await fetchEmailList(session?.accessToken as string, { q: query });
+      const res = await fetchEmailList(session?.accessToken as string, {
+        q: query,
+      });
       if (!res.messages) {
-        throw new Error('Failed to fetch emails');
+        throw new Error("Failed to fetch emails");
       }
       const messageIds = res.messages.map((message: any) => message.id);
-      const emails = await fetchEmailsRaw(session?.accessToken as string, messageIds);
+      const emails = await fetchEmailsRaw(
+        session?.accessToken as string,
+        messageIds
+      );
       const processedEmails: Email[] = [];
       for (const email of emails) {
         processedEmails.push(await mapEmail(email));
       }
       setMessages(processedEmails);
     } catch (err) {
-      console.error('Failed to fetch emails:', err);
+      console.error("Failed to fetch emails:", err);
     }
   }
 
@@ -157,40 +174,45 @@ export function VerifyContent(props: ContentProps) {
   }, [entry, createInputWorker]);
 
   const { data: hash, error, isPending, writeContract } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess: isConfirmed, isError, error: txError } =
-    useWaitForTransactionReceipt({ hash });
+  const {
+    isLoading: isConfirming,
+    isSuccess: isConfirmed,
+    isError,
+    error: txError,
+  } = useWaitForTransactionReceipt({ hash });
 
+  const handleAttestation = async () => {
+    if (!hash) {
+      alert("Please verify your proof on-chain first.");
+      return;
+    }
 
-    const handleAttestation = async () => {
-      if (!hash) {
-        alert("Please verify your proof on-chain first.");
-        return;
+    setIsAttesting(true);
+    setIsModalOpen(true);
+    try {
+      const newAttestationUID = await createGithubAttestation(hash);
+      if (newAttestationUID) {
+        setCurrentAttestationUID(newAttestationUID);
+        setShowConfirmation(true);
+      } else {
+        throw new Error("Failed to create attestation");
       }
-  
-      setIsAttesting(true);
-      setIsModalOpen(true);
-      try {
-        const newAttestationUID = await createGithubAttestation(hash);
-        if (newAttestationUID) {
-          setCurrentAttestationUID(newAttestationUID);
-          setShowConfirmation(true);
-        } else {
-          throw new Error('Failed to create attestation');
-        }
-      } catch (error) {
-        console.error('Error attesting ownership:', error);
-        alert("Failed to attest ownership. Please try again.");
-      } finally {
-        setIsAttesting(false);
-      }
-    };
-  
+    } catch (error) {
+      console.error("Error attesting ownership:", error);
+      alert("Failed to attest ownership. Please try again.");
+    } finally {
+      setIsAttesting(false);
+    }
+  };
+
   async function startProofGeneration() {
     console.log("Starting proof generation");
     setIsGeneratingProof(true);
 
     try {
-      const selectedMessages = messages.filter(message => message.selected && message.inputs);
+      const selectedMessages = messages.filter(
+        (message) => message.selected && message.inputs
+      );
       console.log("Selected messages:", selectedMessages);
 
       if (selectedMessages.length === 0) {
@@ -202,20 +224,29 @@ export function VerifyContent(props: ContentProps) {
       for (const message of selectedMessages) {
         console.log("Generating proof for message:", message.subject);
         try {
-          const proofRes = await generateProofRemotely(entry.slug, message.inputs);
-          console.log('Proof generation result:', proofRes);
+          const proofRes = await generateProofRemotely(
+            entry.slug,
+            message.inputs
+          );
+          console.log("Proof generation result:", proofRes);
           // You might want to update some state here to reflect the new proof
         } catch (error) {
-          console.error("Error generating proof for message:", message.subject, error);
+          console.error(
+            "Error generating proof for message:",
+            message.subject,
+            error
+          );
           alert(`Error generating proof for message: ${message.subject}`);
         }
       }
 
       console.log("Proof generation completed");
-    //   alert("Proof generation completed. Check the 'View generated proofs' section.");
+      //   alert("Proof generation completed. Check the 'View generated proofs' section.");
     } catch (error) {
       console.error("Error in proof generation process:", error);
-      alert("An error occurred during the proof generation process. Please check the console for more details.");
+      alert(
+        "An error occurred during the proof generation process. Please check the console for more details."
+      );
     } finally {
       setIsGeneratingProof(false);
     }
@@ -226,7 +257,9 @@ export function VerifyContent(props: ContentProps) {
     let error, body: string | undefined;
     try {
       inputs = await generateInputFromEmail(entry.slug, email.decodedContents);
-      body = inputs.emailBody ? Buffer.from(inputs.emailBody).toString('utf-8') : undefined;
+      body = inputs.emailBody
+        ? Buffer.from(inputs.emailBody).toString("utf-8")
+        : undefined;
       console.log("inputs", inputs);
     } catch (e: any) {
       console.error("Error generating circuit inputs: ", e);
@@ -243,38 +276,47 @@ export function VerifyContent(props: ContentProps) {
 
   function DisplayGoogleLoginButton() {
     const { data: session, status } = useSession();
-    
+
     const isGoogleAuthed = !!session?.user?.googleEmail;
-  
+
     return (
       <button
         className={`
           px-4 py-2 h-12 rounded-md font-medium text-white
           shadow-md transition-all duration-300 ease-in-out
-          ${isGoogleAuthed 
-            ? 'bg-red-500 hover:bg-red-600' 
-            : 'bg-blue-500 hover:bg-blue-600'}
+          ${
+            isGoogleAuthed
+              ? "bg-red-500 hover:bg-red-600"
+              : "btn btn-primary px-6 py-1 mt-2 bg-[#424242] cursor-pointer text-white font-thin rounded-md hover:bg-black"
+          }
           focus:outline-none focus:ring-2 focus:ring-offset-2
-          ${isGoogleAuthed ? 'focus:ring-red-500' : 'focus:ring-blue-500'}
+          ${isGoogleAuthed ? "focus:ring-red-500" : "focus:ring-[#424242]"}
         `}
-        onClick={() => isGoogleAuthed ? signOut() : signIn('google')}
-        disabled={status === 'loading'}
+        onClick={() => (isGoogleAuthed ? signOut() : signIn("google"))}
+        disabled={status === "loading"}
       >
-        {status === 'loading' 
-          ? 'Loading...' 
-          : isGoogleAuthed 
-            ? 'Logout from Google' 
-            : 'Login with Google'}
+        {status === "loading"
+          ? "Loading..."
+          : isGoogleAuthed
+          ? "Logout from Google"
+          : "Login with Google"}
       </button>
     );
   }
-  
+
   function displayEmailList() {
-    console.log("Displaying email list. Messages:", JSON.stringify(messages, null, 2));
+    console.log(
+      "Displaying email list. Messages:",
+      JSON.stringify(messages, null, 2)
+    );
     return (
       <div className="overflow-x-auto">
         {messages.length === 0 ? (
-          <p>{emailUploaded ? "Processing email..." : "No emails found. Upload an email to see it here."}</p>
+          <p>
+            {emailUploaded
+              ? "Processing email..."
+              : "No emails found. Upload an email to see it here."}
+          </p>
         ) : (
           <table className="table w-full">
             <thead>
@@ -291,24 +333,41 @@ export function VerifyContent(props: ContentProps) {
                 <tr key={index}>
                   <td className="font-medium">
                     <div className="flex items-center justify-center">
-                    <div
-                      className={`w-6 h-6 border-2 rounded flex items-center justify-center cursor-pointer
-                        ${message.error ? 'bg-gray-200 cursor-not-allowed' : 'hover:bg-gray-100'}
-                        ${message.selected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!message.error) {
-                          selectEmail(!message.selected, index);
+                      <div
+                        className={`w-6 h-6 border-2 rounded flex items-center justify-center cursor-pointer
+                        ${
+                          message.error
+                            ? "bg-gray-200 cursor-not-allowed"
+                            : "hover:bg-gray-100"
                         }
-                      }}
-                    >
+                        ${
+                          message.selected
+                            ? "bg-[#424242] border-black"
+                            : "border-gray-300"
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!message.error) {
+                            selectEmail(!message.selected, index);
+                          }
+                        }}
+                      >
                         {message.selected && <Check size={16} color="blue" />}
                       </div>
                     </div>
                   </td>
                   <td>
-                    <div className="tooltip" data-tip={message.error ? message.error : "Email is valid"}>
-                      {!message.error ? <Check color="green" /> : <X color="red" />}
+                    <div
+                      className="tooltip"
+                      data-tip={
+                        message.error ? message.error : "Email is valid"
+                      }
+                    >
+                      {!message.error ? (
+                        <Check color="green" />
+                      ) : (
+                        <X color="red" />
+                      )}
                     </div>
                   </td>
                   <td>{new Date(message.internalDate).toLocaleString()}</td>
@@ -355,34 +414,41 @@ export function VerifyContent(props: ContentProps) {
   }
 
   function verifyProof(id: string) {
-    writeContract({
-      abi: [
-        {
-          inputs: [
-            { internalType: 'uint256[2]', name: 'a', type: 'uint256[2]' },
-            { internalType: 'uint256[2][2]', name: 'b', type: 'uint256[2][2]' },
-            { internalType: 'uint256[2]', name: 'c', type: 'uint256[2]' },
-            {
-              internalType: `uint256[${signalLength}]`,
-              name: 'signals',
-              type: `uint256[${signalLength}]`,
-            },
-          ],
-          name: 'verify',
-          outputs: [],
-          stateMutability: 'nonpayable',
-          type: 'function',
-        },
-      ] as const,
-      address: entry.contractAddress! as Hex,
-      functionName: 'verify',
-      args: circuitOutputToArgs({
-        proof: proofStatus[id].proof,
-        public: proofStatus[id].publicOutput,
-      }) as any,
-    }, {
-      onError: console.log,
-    });
+    writeContract(
+      {
+        abi: [
+          {
+            inputs: [
+              { internalType: "uint256[2]", name: "a", type: "uint256[2]" },
+              {
+                internalType: "uint256[2][2]",
+                name: "b",
+                type: "uint256[2][2]",
+              },
+              { internalType: "uint256[2]", name: "c", type: "uint256[2]" },
+              {
+                internalType: `uint256[${signalLength}]`,
+                name: "signals",
+                type: `uint256[${signalLength}]`,
+              },
+            ],
+            name: "verify",
+            outputs: [],
+            stateMutability: "nonpayable",
+            type: "function",
+          },
+        ] as const,
+        address: entry.contractAddress! as Hex,
+        functionName: "verify",
+        args: circuitOutputToArgs({
+          proof: proofStatus[id].proof,
+          public: proofStatus[id].publicOutput,
+        }) as any,
+      },
+      {
+        onError: console.log,
+      }
+    );
   }
 
   function displayProofJobsToBeVerified() {
@@ -404,24 +470,37 @@ export function VerifyContent(props: ContentProps) {
             </thead>
             <tbody>
               {Object.keys(proofStatus)
-                .filter((id) => proofStatus[id].status === 'COMPLETED')
+                .filter((id) => proofStatus[id].status === "COMPLETED")
                 .map((id) => (
                   <React.Fragment key={id}>
                     <tr>
                       <td>
                         <button
-                          className="btn bg-blue-500 hover:bg-blue-600 text-white"
+                          className="btn btn-primary px-6 py-1 mt-2 bg-[#424242] cursor-pointer text-white font-thin rounded-md hover:bg-black"
                           disabled={isPending || isConfirming}
                           onClick={() => {
-                            console.log('Button state:', { isPending, isConfirming });
-                            verifyProof(id)}}
+                            console.log("Button state:", {
+                              isPending,
+                              isConfirming,
+                            });
+                            verifyProof(id);
+                          }}
                         >
                           Verify
                         </button>
                       </td>
                       <td className="font-medium">{proofStatus[id].id}</td>
                       <td>
-                        <pre>{JSON.stringify(parseOutput(entry.parameters, proofStatus[id].publicOutput), null, 2)}</pre>
+                        <pre>
+                          {JSON.stringify(
+                            parseOutput(
+                              entry.parameters,
+                              proofStatus[id].publicOutput
+                            ),
+                            null,
+                            2
+                          )}
+                        </pre>
                       </td>
                       <td>
                         <button
@@ -432,7 +511,9 @@ export function VerifyContent(props: ContentProps) {
                         </button>
                         {activeJob === `proof-${id}` && (
                           <pre className="whitespace-pre-wrap mt-2">
-                            <code>{JSON.stringify(proofStatus[id].proof, null, 2)}</code>
+                            <code>
+                              {JSON.stringify(proofStatus[id].proof, null, 2)}
+                            </code>
                           </pre>
                         )}
                       </td>
@@ -445,7 +526,13 @@ export function VerifyContent(props: ContentProps) {
                         </button>
                         {activeJob === `public-${id}` && (
                           <pre className="whitespace-pre-wrap mt-2">
-                            <code>{JSON.stringify(proofStatus[id].publicOutput, null, 2)}</code>
+                            <code>
+                              {JSON.stringify(
+                                proofStatus[id].publicOutput,
+                                null,
+                                2
+                              )}
+                            </code>
                           </pre>
                         )}
                       </td>
@@ -458,7 +545,16 @@ export function VerifyContent(props: ContentProps) {
                         </button>
                         {activeJob === `calldata-${id}` && (
                           <pre className="whitespace-pre-wrap mt-2">
-                            <code>{JSON.stringify(circuitOutputToArgs({ proof: proofStatus[id].proof, public: proofStatus[id].publicOutput }), null, 2)}</code>
+                            <code>
+                              {JSON.stringify(
+                                circuitOutputToArgs({
+                                  proof: proofStatus[id].proof,
+                                  public: proofStatus[id].publicOutput,
+                                }),
+                                null,
+                                2
+                              )}
+                            </code>
                           </pre>
                         )}
                       </td>
@@ -473,7 +569,7 @@ export function VerifyContent(props: ContentProps) {
   }
 
   function selectEmail(checked: boolean, key: number) {
-    setMessages(prevMessages => {
+    setMessages((prevMessages) => {
       const newMessages = [...prevMessages];
       newMessages[key].selected = checked;
       return newMessages;
@@ -500,7 +596,10 @@ export function VerifyContent(props: ContentProps) {
               try {
                 console.log("Generating inputs with slug:", entry.slug);
                 inputs = await generateInputFromEmail(entry.slug, contents);
-                console.log("Generated inputs:", JSON.stringify(inputs, null, 2));
+                console.log(
+                  "Generated inputs:",
+                  JSON.stringify(inputs, null, 2)
+                );
               } catch (e: any) {
                 console.error("Error generating inputs:", e);
                 error = "Error generating inputs: " + e.message;
@@ -508,7 +607,9 @@ export function VerifyContent(props: ContentProps) {
 
               const email: Email = {
                 decodedContents: contents,
-                internalDate: parsed.date ? parsed.date.toString() : new Date().toISOString(),
+                internalDate: parsed.date
+                  ? parsed.date.toString()
+                  : new Date().toISOString(),
                 subject: parsed.subject || file.name,
                 selected: true,
                 inputs,
@@ -518,14 +619,17 @@ export function VerifyContent(props: ContentProps) {
 
               console.log("New email object:", JSON.stringify(email, null, 2));
 
-              setMessages(prevMessages => {
+              setMessages((prevMessages) => {
                 const newMessages = [...prevMessages, email];
-                console.log("Updating messages state. New state:", JSON.stringify(newMessages, null, 2));
+                console.log(
+                  "Updating messages state. New state:",
+                  JSON.stringify(newMessages, null, 2)
+                );
                 return newMessages;
               });
 
               setEmailUploaded(true);
-              setRenderTrigger(prev => prev + 1);
+              setRenderTrigger((prev) => prev + 1);
             } catch (error) {
               console.error("Error parsing email:", error);
             }
@@ -542,71 +646,102 @@ export function VerifyContent(props: ContentProps) {
         <h2 className="text-2xl font-bold mb-6">
           Verify Ownership of your Github account!
         </h2>
-        
+
         <div className="space-y-8">
           <section>
             <h4 className="text-xl font-semibold mb-4">
               1. Please provide an email sample
             </h4>
             <ul className="list-disc pl-5 mb-4">
-              <li>You can either connect your Gmail using the button below or upload / drag & drop a .eml file.</li>
+              <li>
+                You can either connect your Gmail using the button below or
+                upload / drag & drop a .eml file.
+              </li>
               <li>Nothing touches our servers, everything is client side!</li>
             </ul>
             <div className="flex items-center space-x-4 mt-4">
               {DisplayGoogleLoginButton()}
               <FileUploadInput onUpload={(e) => uploadEmail(e)} />
             </div>
-            {session?.user?.googleEmail && <p className="mt-2">Logged in as: <b>{session.user.googleEmail}</b></p>}
+            {session?.user?.googleEmail && (
+              <p className="mt-2">
+                Logged in as: <b>{session.user.googleEmail}</b>
+              </p>
+            )}
           </section>
-  
+
           <section>
             <h4 className="text-xl font-semibold mb-4">
               2. Select the emails you want the proofs created for
             </h4>
-            <p className="mb-2">Choose the emails you want to create proofs for. You can select multiple emails.</p>
-            <p className="mb-4">If you select to create the proofs remotely, your emails will be sent to our secured service for proof generation. Emails will be deleted once the proofs are generated.</p>
+            <p className="mb-2">
+              Choose the emails you want to create proofs for. You can select
+              multiple emails.
+            </p>
+            <p className="mb-4">
+              If you select to create the proofs remotely, your emails will be
+              sent to our secured service for proof generation. Emails will be
+              deleted once the proofs are generated.
+            </p>
             {displayEmailList()}
-            <button 
-              className="mt-4 btn bg-blue-500 hover:bg-blue-600 text-white"
+            <button
+              className="btn btn-primary px-6 py-1 mt-2 bg-[#424242] cursor-pointer text-white font-thin rounded-md hover:bg-black"
               onClick={startProofGeneration}
               disabled={isGeneratingProof}
             >
-              {isGeneratingProof ? "Generating proof..." : "Create proof remotely"}
+              {isGeneratingProof
+                ? "Generating proof..."
+                : "Create proof remotely"}
             </button>
           </section>
-  
+
           <section>
             <h4 className="text-xl font-semibold mb-4">
               3. View generated proofs
             </h4>
             {displayProofJobs()}
           </section>
-  
+
           <section>
             <h4 className="text-xl font-semibold mb-4">
               4. Verify proofs on-chain (Sepolia)
             </h4>
-            <p><b>Verification Contract:</b> {entry.contractAddress}</p>
-            <p><b>Groth16 Contract:</b> {entry.verifierContractAddress}</p>
+            <p>
+              <b>Verification Contract:</b> {entry.contractAddress}
+            </p>
+            <p>
+              <b>Groth16 Contract:</b> {entry.verifierContractAddress}
+            </p>
             {displayProofJobsToBeVerified()}
             {hash && <p>Transaction hash: {hash}</p>}
             {isConfirming && <div>Waiting for confirmation...</div>}
             {isConfirmed && <div>Transaction is successful.</div>}
-            {error && <div>Error: {(error as BaseError).shortMessage || error.message}</div>}
-            {txError && <div>Error: {(txError as BaseError).shortMessage || txError.message}</div>}
+            {error && (
+              <div>
+                Error: {(error as BaseError).shortMessage || error.message}
+              </div>
+            )}
+            {txError && (
+              <div>
+                Error: {(txError as BaseError).shortMessage || txError.message}
+              </div>
+            )}
           </section>
-  
+
           <section>
             <h4 className="text-xl font-semibold mb-4">
               5. Attest to your Ownership!
             </h4>
-            <p className="mb-4">Once you have verified your proofs on-chain, you can attest to your ownership of the Github account.</p>
-            <button 
-          className="btn bg-blue-500 hover:bg-blue-600 text-white"
-          onClick={handleAttestation}
-        >
-           Attest Ownership
-        </button>
+            <p className="mb-4">
+              Once you have verified your proofs on-chain, you can attest to
+              your ownership of the Github account.
+            </p>
+            <button
+              className="btn btn-primary px-6 py-1 mt-2 bg-[#424242] cursor-pointer text-white font-thin rounded-md hover:bg-black"
+              onClick={handleAttestation}
+            >
+              Attest Ownership
+            </button>
             <p className="mt-2">Here is a link to your attestation!</p>
           </section>
         </div>

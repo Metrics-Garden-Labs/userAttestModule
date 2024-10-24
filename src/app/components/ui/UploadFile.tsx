@@ -52,14 +52,7 @@ const FileUploadInput: React.FC<FileUploadInputProps> = ({ onUpload }) => {
         />
         <label
           htmlFor="file-upload"
-          className="
-            px-4  h-12 bg-blue-500 text-white rounded-md
-            font-medium cursor-pointer shadow-md
-            transition-all duration-300 ease-in-out
-            hover:bg-blue-600 focus:outline-none focus:ring-2
-            focus:ring-offset-2 focus:ring-blue-500
-            flex items-center justify-center
-          "
+          className="btn btn-primary px-6 py-1 mt-2 bg-[#424242] cursor-pointer text-white font-thin rounded-md hover:bg-black"
         >
           {fileName || 'Upload File'}
         </label>
