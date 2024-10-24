@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClientSessionProvider } from "./components/ClientSessionProvider";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import { WalletProviders } from "./walletproviders";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -22,11 +23,14 @@ export default function RootLayout({
       <body className={inter.className}>
         <ClientSessionProvider>
           <WalletProviders>
-          <Navbar />
-        {children}
-        </WalletProviders>
+            <div className="min-h-screen flex flex-col bg-white">
+              <Navbar />
+             <main className="flex-grow">{children}</main> 
+              <Footer />
+            </div>
+          </WalletProviders>
         </ClientSessionProvider>
-        </body>
+      </body>
     </html>
   );
 }
