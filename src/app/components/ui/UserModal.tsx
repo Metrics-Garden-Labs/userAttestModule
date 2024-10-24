@@ -184,7 +184,7 @@ export default function UserModal({ user, onClose }: UserModalProps) {
             }`}
             onClick={() => setIsReviewMode(true)}
           >
-            Rate
+            Endorse
           </button>
         </div>
         {isReviewMode ? renderReviewScreen() : renderInfoScreen()}

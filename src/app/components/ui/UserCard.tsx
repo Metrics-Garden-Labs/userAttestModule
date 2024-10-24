@@ -43,7 +43,7 @@ function UserCard({ user, onSelect }: UserCardProps) {
         onClick={onSelect}
         className="btn btn-primary px-6 py-1 mt-2 bg-[#424242] cursor-pointer text-white font-thin rounded-md hover:bg-black"
       >
-        Rate
+        Endorse
       </button>
     </div>
   );
