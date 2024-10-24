@@ -4,12 +4,13 @@
 import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { FaBars, FaTimes } from 'react-icons/fa';
+import { FaBars, FaGithub, FaTimes } from 'react-icons/fa';
 import { isMobile } from 'react-device-detect';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import FetchAndStoreUser from './FetchAndStoreUser';
 import useLocalStorage from '../../hooks/useLocalStorage'; // Import the useLocalStorage hook
+import { FaG } from 'react-icons/fa6';
 
 export default function Navbar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -109,12 +110,14 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <button
-              onClick={() => signIn('github')}
-              className="bg-black text-white px-2 py-1 rounded-md"
-            >
-              Sign in with GitHub
-            </button>
+			<button
+			onClick={() => signIn('github')}
+			className="bg-white flex flex-row items-center gap-2 mx-auto justify-center hover:bg-black hover:text-white text-black border-[1px] px-3 py-2 rounded-md group"
+		  >
+			<FaGithub className="text-black text-xl group-hover:text-white" />
+			Sign in with GitHub
+		  </button>
+		  
           )}
           <div className="md:hidden ml-4">
             <button className="text-white focus:outline-none" onClick={toggleSidebar}>
